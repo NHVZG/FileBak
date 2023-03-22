@@ -61,21 +61,22 @@ function onWsConnection(ws,im){
     ws.isAlive = true;//存活标识
     ws.clientID = crypto.randomUUID();
     ws.send(JSON.stringify({type: 'signed', clientID: ws.clientID}));
-    ws.on('message', onWsMessage.bind(this,ws.clientID, ws));
+    ws.on('message', onWsMessage);
     ws.on('pong', onWsPong);
 
     __log(`connect from ${ip}-->${ws.clientID}`);
 }
 
 //. 处理客戶端发送的心跳帧
-function onWsPong(ws){
+function onWsPong(buffer){
     this.isAlive=true;
-    __log(`${ws.clientID}:pong`);
+    __log(`${this.clientID}:pong`);
 }
 
 
 //.处理来自客户端消息
-function onWsMessage(clientID,ws,data,isBinary){
+function onWsMessage(data,isBinary){
+    let clientID=this.clientID;
     let json = JSON.parse(data.toString());
     switch (json.type) {
         case 'message':                                                             //普通信息

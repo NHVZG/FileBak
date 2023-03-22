@@ -1,17 +1,17 @@
 <template>
-<!--  <TestIndex/>-->
-  <Chat/>
+  <TestIndex/>
+<!--  <Index/>-->
 </template>
 
 <script>
 import TestIndex from "../test/frontend/TestIndex.vue";
-import Chat from "./components/Chat.vue";
+import Index from "../frontEnd/components/Index.vue";
 
 export default {
   name: 'App',
   components: {
     TestIndex,
-    Chat
+    Index
   }
 }
 </script>
