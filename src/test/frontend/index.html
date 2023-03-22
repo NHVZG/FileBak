@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <button id="connect">connect</button>
+</body>
+<script type="application/javascript">
+    let obj={
+        sendChannel:null,
+        localConnection:null,
+        remoteConnection:null,
+        receiveChannel:null,
+        msg:''
+    };
+
+    function connectPeer(){
+        let _this=obj;
+        function handleCreateDescriptionError(error) {
+            console.log("Unable to create an offer: " + error.toString());
+        }
+        function handleAddCandidateError() {
+            console.log("Oh noes! addICECandidate failed!");
+        }
+        function handleSendChannelStatusChange(event) {
+            if (_this.sendChannel) {
+                var state = _this.sendChannel.readyState;
+
+                if (state === "open") {
+                    /*messageInputBox.disabled = false;
+                    messageInputBox.focus();
+                    sendButton.disabled = false;
+                    disconnectButton.disabled = false;
+                    connectButton.disabled = true;*/
+                } else {
+                    /*messageInputBox.disabled = true;
+                    sendButton.disabled = true;
+                    connectButton.disabled = false;
+                    disconnectButton.disabled = true;*/
+                }
+            }
+        }
+
+
+
+        _this.localConnection = new RTCPeerConnection();
+        _this.sendChannel = _this.localConnection.createDataChannel("sendChannel");
+        _this.sendChannel.onopen = handleSendChannelStatusChange;
+        _this.sendChannel.onclose = handleSendChannelStatusChange;
+
+
+        _this.remoteConnection = new RTCPeerConnection();
+
+
+        _this.remoteConnection.ondatachannel = function(event){
+            _this.receiveChannel = event.channel;
+
+            function handleReceiveChannelStatusChange(event) {
+                if (_this.receiveChannel) {
+                    console.log("Receive channel's status has changed to " +
+                        _this.receiveChannel.readyState);
+                }
+            }
+
+            _this.receiveChannel.onmessage = function(event){
+                _this.receive=event.data;
+            }
+            _this.receiveChannel.onopen = handleReceiveChannelStatusChange;
+            _this.receiveChannel.onclose = handleReceiveChannelStatusChange;
+        };
+
+        _this.localConnection.onicecandidate=function(e){
+            if(e.candidate){
+                _this.remoteConnection.addIceCandidate(e.candidate).catch(handleAddCandidateError);
+            }
+        }
+
+        _this.remoteConnection.onicecandidate=function(e){
+            if(e.candidate){
+                _this.localConnection.addIceCandidate(e.candidate).catch(handleAddCandidateError);
+            }
+        }
+
+
+
+        _this.localConnection.createOffer()
+            .then(offer =>{
+                return _this.localConnection.setLocalDescription(offer)
+            })
+            .then(() =>{
+                return _this.remoteConnection.setRemoteDescription(_this.localConnection.localDescription)
+            })
+            .then(() =>{
+                return _this.remoteConnection.createAnswer()
+            })
+            .then(answer => {
+                return _this.remoteConnection.setLocalDescription(answer)
+            })
+            .then(() => {
+                return _this.localConnection.setRemoteDescription(_this.remoteConnection.localDescription)
+            })
+            .catch(handleCreateDescriptionError);
+
+
+    }
+
+    connectButton = document.getElementById('connect');
+
+    // Set event listeners for user interface widgets
+
+    connectButton.addEventListener('click', connectPeer, false);
+</script>
+</html>

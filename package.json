@@ -1,0 +1,55 @@
+{
+  "name": "vue-electron",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint",
+    "electron:build": "vue-cli-service electron:build",
+    "electron:serve": "vue-cli-service electron:serve",
+    "electronVueDebug": "vue-cli-service electron:serve --debug",
+    "electron:debug": "electron --remote-debugging-port=9223 ./dist/electron",
+    "postinstall": "electron-builder install-app-deps",
+    "postuninstall": "electron-builder install-app-deps"
+  },
+  "main": "background.js",
+  "dependencies": {
+    "core-js": "^3.8.3",
+    "element-plus": "^2.2.34",
+    "vue": "^3.2.13",
+    "ws": "^8.13.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.12.16",
+    "@vue/cli-plugin-babel": "~5.0.0",
+    "@vue/cli-service": "~5.0.0",
+    "electron": "^14.2.9",
+    "electron-devtools-installer": "^3.1.0",
+    "vue-cli-plugin-electron-builder": "~2.1.1"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/vue3-essential",
+      "eslint:recommended"
+    ],
+    "parserOptions": {
+      "parser": "@babel/eslint-parser"
+    },
+    "rules": {
+      "no-unused-labels": "off",
+      "no-unused-expressions": "off",
+      "no-unused-vars": "off"
+    }
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead",
+    "not ie 11"
+  ]
+}
