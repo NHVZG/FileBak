@@ -14,7 +14,7 @@ function ipcHandleInit(win){
     //websocket - server
     ipcMain.handle('ws-server-startup', (event,data) =>{
         return webrtcServer.buildWsServer({
-            wsMessage:(clientID,msg)=>win.webContents.send('wsMessage',clientID,msg)//BrowserWindow.getFocusedWindow()
+            wsMessage:(clientID,msg)=>win.webContents.send('wsServerMessage',clientID,msg)//BrowserWindow.getFocusedWindow()
         });
     });
     ipcMain.handle('ws-server-send', (event,msg) =>{
@@ -28,7 +28,8 @@ function ipcHandleInit(win){
         fbuConfig.web.client.port=data.port;
         fbuConfig.web.client.host=data.host;
         return webrtcClient.wsConnect({
-            wsMessage:(clientID,msg)=>win.webContents.send('wsMessage',clientID,msg)//BrowserWindow.getFocusedWindow()
+            wsMessage:(clientID,msg)=>win.webContents.send('wsClientMessage',clientID,msg),//BrowserWindow.getFocusedWindow()
+            wsConnect:(clientID)=>win.webContents.send('wsClientConnect',clientID)
         });
     });
     ipcMain.handle('ws-client-send', (event,msg) =>{

@@ -25,11 +25,12 @@ contextBridge.exposeInMainWorld('wsServer', {
     startup:(arg)=>ipcRenderer.invoke('ws-server-startup',arg),
     send:(...arg)=>ipcRenderer.invoke('ws-server-send',...arg),
     terminate:(...arg)=>ipcRenderer.invoke('ws-server-terminate',...arg),
-    onMsg:(callback)=>ipcRenderer.on('wsMessage',callback),
+    onMsg:(callback)=>ipcRenderer.on('wsServerMessage',callback),
 });
 
 contextBridge.exposeInMainWorld('wsClient', {
     connect:(...arg)=>ipcRenderer.invoke('ws-client-connect',...arg),
     send:(...arg)=>ipcRenderer.invoke('ws-client-send',...arg),
-    onMsg:(callback)=>ipcRenderer.on('wsMessage',callback)
+    onMsg:(callback)=>ipcRenderer.on('wsClientMessage',callback),
+    onConnect:(callback)=>ipcRenderer.on('wsClientConnect',callback)
 });

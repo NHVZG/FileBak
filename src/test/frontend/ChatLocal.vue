@@ -24,6 +24,11 @@
             <el-button @click="clientSend">发送</el-button>
           </el-col>
         </el-form-item>
+      <div style="height: 200px;" class="chat-area">
+        <p style="text-align: left;" v-for="item in clientHistory" class="chat-item">
+          {{`[${item.time}] ${item.clientID}:  ${item.msg}`}}
+        </p>
+      </div>
     </el-col>
     <el-col :span="10">
       <span style="float: left"> 服务端：</span><br/>
@@ -35,14 +40,13 @@
         <el-button @click="serverSend">发送</el-button>
         </el-col>
       </el-form-item>
+      <div style="height: 200px;" class="chat-area">
+        <p style="text-align: left;" v-for="item in serverHistory" class="chat-item">
+          {{`[${item.time}] ${item.clientID}:  ${item.msg}`}}
+        </p>
+      </div>
     </el-col>
   </el-form-item>
-
-  <div style="height: 200px;" class="chat-area">
-    <p style="text-align: left;" v-for="item in history" class="chat-item">
-      {{`[${item.time}] ${item.clientID}:  ${item.msg}`}}
-    </p>
-  </div>
 
 </template>
 
@@ -55,15 +59,28 @@ export default {
       port:6503,
       client:'',
       server:"",
-      history:[]
+      clientHistory:[],
+      serverHistory:[]
     }
   },
   mounted() {
-    window.wsServer.onMsg(this.onMsg);
+    window.wsServer.onMsg(this.onServerMsg);
+    window.wsClient.onMsg(this.onClientMsg);
+    window.wsClient.onConnect(this.onClientConnect);
   },
   methods:{
-    onMsg(event,clientID,msg){
-      this.history.push({
+    onClientConnect(event,clientID){
+      console.log(clientID);
+    },
+    onClientMsg(event,clientID,msg){
+      this.clientHistory.push({
+        time:new Date().toLocaleDateString(),
+        clientID:clientID,
+        msg:msg
+      });
+    },
+    onServerMsg(event,clientID,msg){
+      this.serverHistory.push({
         time:new Date().toLocaleDateString(),
         clientID:clientID,
         msg:msg

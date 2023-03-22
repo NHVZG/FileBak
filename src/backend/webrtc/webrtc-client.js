@@ -36,11 +36,12 @@ import {fbuConfig} from "../config/config-center";
 import {WebSocket }   from 'ws';
 
 let onWsMessageCallBack=()=>{};         //. ws信息回调
+let onWsConnectCallBack=()=>{};         //. ws连接建立回调
 let connection;                                         //. 连接
 let clientID;                                               //. 客户端id
 
 //. webscokect连接远程客户端
-function wsConnect({wsMessage}){
+function wsConnect({wsMessage,wsConnect}){
     process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;            //允许自签证书
     let {tls,host,port}=fbuConfig.web.client;
     connection=new WebSocket(`${tls?'wss':'ws'}://${host}:${port}`)
@@ -52,6 +53,7 @@ function wsConnect({wsMessage}){
     connection.on('message',onWsMessage);
 
     onWsMessageCallBack=wsMessage||onWsMessageCallBack;
+    onWsConnectCallBack=wsConnect||onWsConnectCallBack;
     return true;
 }
 
@@ -93,7 +95,7 @@ function onWsPing(){
 function onWsMessage(data,isBinary){
     let json=JSON.parse(data.toString());
     switch(json.type){
-        case 'signed':clientID=json.clientID;break;
+        case 'signed':clientID=json.clientID;onWsConnectCallBack(json.clientID);break;
         case 'message':if(onWsMessageCallBack)onWsMessageCallBack(json.clientID,json.msg);break;
     }
 }
