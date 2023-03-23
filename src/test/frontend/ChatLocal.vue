@@ -10,8 +10,15 @@
       <el-button type="primary" @click="connect">连接</el-button>
     </el-col>
     <el-col :span="2">
-      <el-button type="primary" @click="startup">启动</el-button>
+      <el-button type="primary" @click="startup">启动ws</el-button>
     </el-col>
+    <el-col :span="2">
+      <el-button type="primary" @click="terminate">停止</el-button>
+    </el-col>
+  </el-form-item>
+  <el-form-item>
+    <el-button type="primary" @click="startupTurn">启动turn</el-button>
+    <el-button type="primary" @click="terminateTurn">停止turn</el-button>
   </el-form-item>
   <el-form-item>
     <el-col :span="10">
@@ -98,6 +105,15 @@ export default {
     startup(){
       let result=window.wsServer.startup();
     },
+    terminate(){
+      window.wsServer.terminate();
+    },
+    startupTurn(){
+      window.turnServer.startup();
+    },
+    terminateTurn(){
+      window.turnServer.terminate();
+    }
   }
 }
 </script>

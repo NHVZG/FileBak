@@ -10,9 +10,15 @@ const fbuConfigBuilder= {
         client:{
             host:'',
             port:'',
-            tls:false
+            tls:false,
+            tun:''
         },
         server:{
+            tun:{
+                port:6500,
+                username:'tun',
+                password:'123456'
+            },
             tls:false,
             certPath:()=>util.__resolvePublicPath('certificate/server.cert'),
             keyPath:()=>util.__resolvePublicPath('certificate/server.key'),

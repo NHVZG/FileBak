@@ -95,8 +95,10 @@ function onWsPing(){
 function onWsMessage(data,isBinary){
     let json=JSON.parse(data.toString());
     switch(json.type){
-        case 'signed':clientID=json.clientID;onWsConnectCallBack(json.clientID);break;
-        case 'message':if(onWsMessageCallBack)onWsMessageCallBack(json.clientID,json.msg);break;
+        case 'signed':clientID=json.clientID;onWsConnectCallBack(json.clientID);break;                                          //连接成功
+        case 'message':if(onWsMessageCallBack)onWsMessageCallBack(json.clientID,json.msg);break                 //接受信息
+        case 'ice':                                                                                                                                                             //webrtc-ice信息交换
+            break;
     }
 }
 

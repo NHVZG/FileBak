@@ -13,7 +13,7 @@ function ipcHandleInit(win){
     });
     //websocket - server
     ipcMain.handle('ws-server-startup', (event,data) =>{
-        return webrtcServer.buildWsServer({
+        return webrtcServer.wsServerBuild({
             wsMessage:(clientID,msg)=>win.webContents.send('wsServerMessage',clientID,msg)//BrowserWindow.getFocusedWindow()
         });
     });
@@ -34,6 +34,13 @@ function ipcHandleInit(win){
     });
     ipcMain.handle('ws-client-send', (event,msg) =>{
         return webrtcClient.sendToServer({type:'message',msg:msg});
+    });
+    //turn -  server
+    ipcMain.handle('turn-server-startup',()=>{
+       return webrtcServer.turnServerBuild();
+    });
+    ipcMain.handle('turn-server-terminate',()=>{
+       return webrtcServer.turnServerTerminate();
     });
 
 }

@@ -5,21 +5,25 @@ import  http from "http";
 import {fbuConfig} from "../config/config-center";
 import crypto from "crypto";
 import {__log,__result} from "../utils/util";
-
+import Turn from 'node-turn';
 let onWsMessageCallBack=()=>{};       //.  ws信息回调
 let webServer;                                         //.  web服务器
 let wsServer;                                            //.  websocket服务器
+let turnServer;                                         //.  tun服务器
 
 //. 停止websocket服务
 function wsServerTerminate(){
-    wsServer&&wsServer.close();
+    webServer&&webServer.close();
+    if(wsServer){
+        wsServer.clients.forEach((ws)=>ws.terminate());
+        wsServer.close();//close会等待连接关闭
+    }
 }
 
 //. 新建websocket信令服务器
-function buildWsServer({wsMessage}) {
-    if(wsServer)return __result(true)(null,'wsServer has been launched');
+function wsServerBuild({wsMessage}) {
     //创建web服务器
-    if (!webServer) {
+    if (!webServer||(!webServer.listening)) {
         const {tls,key,cert,port}=fbuConfig.web.server;
         webServer =tls && key && cert?
             https.createServer({key,cert},handleRequest):
@@ -27,7 +31,10 @@ function buildWsServer({wsMessage}) {
         webServer.listen(port, () => __log(`Server is listening on port ${port}`));
     }
     //创建websocket服务器
-    if (!(wsServer = new WebSocketServer({server: webServer}))) {
+    if (!wsServer||wsServer._state!==0) {
+        wsServer = new WebSocketServer({server: webServer});
+    }
+    if(!wsServer){
         return __result(false)("ERROR: Unable to create WbeSocket server!");
     }
 
@@ -83,8 +90,8 @@ function onWsMessage(data,isBinary){
             wsBroadcast(clientID).msg(json.msg);
             onWsMessageCallBack(clientID, json.msg);
             break;
-        case 'ice':                                                                      //webRTC交换ice信息
-            //wsUnicast(clientID).msg(json.msg);
+        case 'ice':                                                                      //webRTC交换ice信息，服务端无需解析
+            wsUnicast(clientID).data('ice',json.data);
             break;
     }
 }
@@ -104,14 +111,24 @@ function sendChat(msg,clientID){
         :wsBroadcast('server').msg(msg);
 }
 
+//. 创建turn服务器
+function turnServerBuild(){
+    turnServer= new Turn({
+        // set options
+        authMech: 'long-term',
+        listeningPort:fbuConfig.web.server.tun.port,
+        credentials: {
+            [fbuConfig.web.server.tun.username]: fbuConfig.web.server.tun.password
+        }
+    });
+    turnServer.start();
+}
+function turnServerTerminate(){
+    turnServer.stop();
+}
 
 
 //% 广播
-/*function wsBroadcast(msg,clientID){
-    wsServer&&wsServer.clients&&wsServer.clients.forEach(function(ws) {
-        return ws.send(JSON.stringify({type:'message',msg,clientID}))
-    });
-}*/
 function wsBroadcast(sender){
     let cast=(data)=>{
         wsServer&&wsServer.clients&&wsServer.clients.forEach(function(ws) {
@@ -123,9 +140,6 @@ function wsBroadcast(sender){
 
 
 //% 单播
-/*function wsUnicast(msg,clientID){
-    wsServer&&wsServer.clients&&wsServer.clients.forEach(ws=>ws.clientID===clientID&&ws.send(JSON.stringify({type:'message',msg,clientID})));
-}*/
 function wsUnicast(receiver){
     let cast=(data)=> {
         wsServer && wsServer.clients && wsServer.clients.forEach(function (ws) {
@@ -135,9 +149,11 @@ function wsUnicast(receiver){
     return wsDataBuilder(cast,receiver);
 }
 
+//% 发送数据构建
 function wsDataBuilder(cast,clientID){
     return {
-        msg:(msg)=>cast({type:'message',msg,clientID})
+        msg:(msg)=>cast({type:'message',msg,clientID}),
+        data:(type,data)=>cast({type,data})
     }
 }
 
@@ -169,10 +185,20 @@ function getAddressByWs(ws){
     let remoteAddr=ws._socket.remoteAddress;
     return remoteAddr.substring(0, 7) === "::ffff:"?remoteAddr.substring(7):remoteAddr;
 }
+//% 根据clientID查找对应的websocket连接
+function getSocketByClientID(clientID){
+    let websocket;
+    wsServer&&wsServer.clients&&wsServer.clients.forEach(ws=>{
+        if(ws.clientID===clientID)websocket=ws;
+    });
+    return websocket;
+}
 
 
 export {
     sendChat,
-    buildWsServer,
+    wsServerBuild,
     wsServerTerminate,
+    turnServerBuild,
+    turnServerTerminate
 };

@@ -21,6 +21,11 @@ contextBridge.exposeInMainWorld('webrtc', {
 });
 
 
+contextBridge.exposeInMainWorld('turnServer', {
+    startup:(...arg)=>ipcRenderer.invoke('turn-server-startup',...arg),
+    terminate:(...arg)=>ipcRenderer.invoke('turn-server-terminate',...arg)
+});
+
 contextBridge.exposeInMainWorld('wsServer', {
     startup:(arg)=>ipcRenderer.invoke('ws-server-startup',arg),
     send:(...arg)=>ipcRenderer.invoke('ws-server-send',...arg),
