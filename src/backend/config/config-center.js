@@ -8,10 +8,14 @@ let fbuConfig=null;
 const fbuConfigBuilder= {
     web:{
         client:{
-            host:'',
-            port:'',
-            tls:false,
-            tun:''
+            tun: {
+
+            },
+            ws:{
+                host:'',
+                port:'',
+                tls:false
+            }
         },
         server:{
             tun:{
@@ -19,13 +23,15 @@ const fbuConfigBuilder= {
                 username:'tun',
                 password:'123456'
             },
-            tls:false,
-            certPath:()=>util.__resolvePublicPath('certificate/server.cert'),
-            keyPath:()=>util.__resolvePublicPath('certificate/server.key'),
-            cert:()=>fs.readFileSync(fbuConfigBuilder.web.server.certPath()),
-            key:()=>fs.readFileSync(fbuConfigBuilder.web.server.keyPath()),
-            port:6503,
-            block:[]
+            ws:{
+                tls:false,
+                certPath:()=>util.__resolvePublicPath('certificate/server.cert'),
+                keyPath:()=>util.__resolvePublicPath('certificate/server.key'),
+                cert:()=>fs.readFileSync(fbuConfigBuilder.web.server.ws.certPath()),
+                key:()=>fs.readFileSync(fbuConfigBuilder.web.server.ws.keyPath()),
+                port:6503,
+                block:[]
+            }
         }
     }
 };

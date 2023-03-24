@@ -39,11 +39,12 @@ let onWsMessageCallBack=()=>{};         //. ws信息回调
 let onWsConnectCallBack=()=>{};         //. ws连接建立回调
 let connection;                                         //. 连接
 let clientID;                                               //. 客户端id
+let rtcConnection;                                    //. webrtc连接
 
 //. webscokect连接远程客户端
 function wsConnect({wsMessage,wsConnect}){
     process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;            //允许自签证书
-    let {tls,host,port}=fbuConfig.web.client;
+    let {tls,host,port}=fbuConfig.web.client.ws;
     connection=new WebSocket(`${tls?'wss':'ws'}://${host}:${port}`)
 
     connection.on('error', onWsError);
@@ -98,6 +99,7 @@ function onWsMessage(data,isBinary){
         case 'signed':clientID=json.clientID;onWsConnectCallBack(json.clientID);break;                                          //连接成功
         case 'message':if(onWsMessageCallBack)onWsMessageCallBack(json.clientID,json.msg);break                 //接受信息
         case 'ice':                                                                                                                                                             //webrtc-ice信息交换
+
             break;
     }
 }
@@ -106,6 +108,19 @@ function onWsMessage(data,isBinary){
 function sendToServer(msg){
     if(!connection)throw 'connection not found';
     connection.send(JSON.stringify(msg));
+}
+
+
+function createWebRtcConnection(){
+    rtcConnection=fbuConfig.web.client.tun?
+        new RTCPeerConnection({iceServers:fbuConfig.web.client.tun}):
+        new RTCPeerConnection();
+    rtcConnection.onicecandidate = handleICECandidateEvent;
+    rtcConnection.oniceconnectionstatechange = handleICEConnectionStateChangeEvent;
+    rtcConnection.onicegatheringstatechange = handleICEGatheringStateChangeEvent;
+    rtcConnection.onsignalingstatechange = handleSignalingStateChangeEvent;
+    rtcConnection.onnegotiationneeded = handleNegotiationNeededEvent;
+    rtcConnection.ontrack = handleTrackEvent;
 }
 
 export {sendToServer,wsConnect}

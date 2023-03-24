@@ -25,8 +25,8 @@ function ipcHandleInit(win){
     });
     //websocket - client
     ipcMain.handle('ws-client-connect', (event,data) =>{
-        fbuConfig.web.client.port=data.port;
-        fbuConfig.web.client.host=data.host;
+        fbuConfig.web.client.ws.port=data.port;
+        fbuConfig.web.client.ws.host=data.host;
         return webrtcClient.wsConnect({
             wsMessage:(clientID,msg)=>win.webContents.send('wsClientMessage',clientID,msg),//BrowserWindow.getFocusedWindow()
             wsConnect:(clientID)=>win.webContents.send('wsClientConnect',clientID)

@@ -24,7 +24,7 @@ function wsServerTerminate(){
 function wsServerBuild({wsMessage}) {
     //创建web服务器
     if (!webServer||(!webServer.listening)) {
-        const {tls,key,cert,port}=fbuConfig.web.server;
+        const {tls,key,cert,port}=fbuConfig.web.server.ws;
         webServer =tls && key && cert?
             https.createServer({key,cert},handleRequest):
             http.createServer({},handleRequest);
@@ -91,7 +91,8 @@ function onWsMessage(data,isBinary){
             onWsMessageCallBack(clientID, json.msg);
             break;
         case 'ice':                                                                      //webRTC交换ice信息，服务端无需解析
-            wsUnicast(clientID).data('ice',json.data);
+            let websocket=getSocketByIp(json.target);           //根据目标ip查找连接
+            wsUnicast(websocket.clientID).data('ice',json.data);
             break;
     }
 }
@@ -172,8 +173,8 @@ function handleRequest(request,response){
 
 //% 过滤客户端
 function filter(ip){
-    if(!fbuConfig.web.server.block||fbuConfig.web.server.block.length<1)return false;
-    return fbuConfig.web.server.block.includes(ip);
+    if(!fbuConfig.web.server.ws.block||fbuConfig.web.server.ws.block.length<1)return false;
+    return fbuConfig.web.server.ws.block.includes(ip);
 }
 
 //% 获取ip
@@ -190,6 +191,14 @@ function getSocketByClientID(clientID){
     let websocket;
     wsServer&&wsServer.clients&&wsServer.clients.forEach(ws=>{
         if(ws.clientID===clientID)websocket=ws;
+    });
+    return websocket;
+}
+//% 根据ip获取对应的websocket连接
+function getSocketByIp(ip){
+    let websocket;
+    wsServer&&wsServer.clients&&wsServer.clients.forEach(ws=>{
+        websocket=getAddressByWs(ws)===ip;
     });
     return websocket;
 }
