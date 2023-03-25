@@ -17,6 +17,12 @@ contextBridge.exposeInMainWorld('versions', {
 contextBridge.exposeInMainWorld('webrtc', {
     webrtc_connect:(arg)=>{
         return ipcRenderer.invoke('webrtc-connect',arg)
+    },
+    test:(arg)=>{
+        return ipcRenderer.invoke('startrtc',arg)
+    },
+    test1:(arg)=>{
+        return ipcRenderer.invoke('sendrtc',arg)
     }
 });
 

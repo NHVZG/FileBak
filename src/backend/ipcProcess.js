@@ -42,6 +42,13 @@ function ipcHandleInit(win){
     ipcMain.handle('turn-server-terminate',()=>{
        return webrtcServer.turnServerTerminate();
     });
+    ipcMain.handle('startrtc',(event,clientID)=>{
+       webrtcClient.setRemoteClientID(clientID);
+       return webrtcClient.start();
+    });
+    ipcMain.handle('sendrtc',()=>{
+       return webrtcClient.sendrtc();
+    });
 
 }
 

@@ -91,9 +91,11 @@ function onWsMessage(data,isBinary){
             onWsMessageCallBack(clientID, json.msg);
             break;
         case 'ice':                                                                      //webRTC交换ice信息，服务端无需解析
-            let websocket=getSocketByIp(json.target);           //根据目标ip查找连接
-            wsUnicast(websocket.clientID).data('ice',json.data);
+            wsUnicast(getSocketByClientID(json.to).clientID).data('ice',json);
             break;
+        case 'sdp-send':
+        case 'sdp-receive':
+            wsUnicast(getSocketByClientID(json.to).clientID).data(json.type,json);break;
     }
 }
 
@@ -117,9 +119,9 @@ function turnServerBuild(){
     turnServer= new Turn({
         // set options
         authMech: 'long-term',
-        listeningPort:fbuConfig.web.server.tun.port,
+        listeningPort:fbuConfig.web.server.turn.port,
         credentials: {
-            [fbuConfig.web.server.tun.username]: fbuConfig.web.server.tun.password
+            [fbuConfig.web.server.turn.username]: fbuConfig.web.server.turn.password
         }
     });
     turnServer.start();
@@ -198,7 +200,7 @@ function getSocketByClientID(clientID){
 function getSocketByIp(ip){
     let websocket;
     wsServer&&wsServer.clients&&wsServer.clients.forEach(ws=>{
-        websocket=getAddressByWs(ws)===ip;
+        if(getAddressByWs(ws)===ip)websocket=ws;
     });
     return websocket;
 }

@@ -8,8 +8,10 @@ let fbuConfig=null;
 const fbuConfigBuilder= {
     web:{
         client:{
-            tun: {
-
+            turn: {
+                iceServers:null,
+                host:'192.168.1.5',
+                remoteClientID:''
             },
             ws:{
                 host:'',
@@ -18,7 +20,7 @@ const fbuConfigBuilder= {
             }
         },
         server:{
-            tun:{
+            turn:{
                 port:6500,
                 username:'tun',
                 password:'123456'
@@ -46,6 +48,8 @@ function build(conf,confBuilder){
             }else if(!util.__isObject(confBuilder[k])||confBuilder[k] instanceof Array){
                 conf[k]=confBuilder[k];
                 continue;
+            }else if(confBuilder[k]==null){
+                conf[k]=null;
             }
             else conf[k]={};
         }

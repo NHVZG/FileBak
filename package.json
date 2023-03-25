@@ -19,6 +19,7 @@
     "element-plus": "^2.2.34",
     "node-turn": "^0.0.6",
     "vue": "^3.2.13",
+    "wrtc": "^0.4.7",
     "ws": "^8.13.0"
   },
   "devDependencies": {

@@ -7,7 +7,7 @@ function __resolvePublicPath(relative){
 }
 
 function __isObject(obj){
-    return typeof obj ==='object'&&(!(obj instanceof Array));
+    return obj!==null&&typeof obj ==='object'&&(!(obj instanceof Array));
 }
 
 function __readFile(filePath){

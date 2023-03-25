@@ -19,6 +19,10 @@
   <el-form-item>
     <el-button type="primary" @click="startupTurn">启动turn</el-button>
     <el-button type="primary" @click="terminateTurn">停止turn</el-button>
+    <br>
+    <el-button type="primary" @click="start">start</el-button>
+    <el-button type="primary" @click="sendChannel">sendrtc</el-button>
+    <el-input v-model="rtcAddr" />
   </el-form-item>
   <el-form-item>
     <el-col :span="10">
@@ -67,7 +71,8 @@ export default {
       client:'',
       server:"",
       clientHistory:[],
-      serverHistory:[]
+      serverHistory:[],
+      rtcAddr:''
     }
   },
   mounted() {
@@ -113,6 +118,12 @@ export default {
     },
     terminateTurn(){
       window.turnServer.terminate();
+    },
+    start(){
+      window.webrtc.test(this.rtcAddr);
+    },
+    sendChannel(){
+      window.webrtc.test1();
     }
   }
 }
