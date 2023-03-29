@@ -186,10 +186,10 @@ function createWebRtcConnection(){
     //` 开始协商事件
     connection.onnegotiationneeded = onNegotiationNeeded;
 
-    //` 数据传输事件
+    //` 数据传输事件(rtc)
     connection.ontrack = onTrack;
 
-    //`
+    //` 自定义数据通道事件
     connection.ondatachannel=onDataChannel;
 
     return connection;
