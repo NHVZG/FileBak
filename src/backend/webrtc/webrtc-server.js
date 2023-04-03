@@ -60,7 +60,7 @@ function wsServerBuild({wsMessage}) {
 function onWsConnection(ws,im){
     //过滤客户端
     let ip=getAddressByIncomeMessage(im);
-    if(filter(im)){
+    if(filter(ip)){
         ws.close(1003,'block ip!');
         return __log(`Connection from ${ip} has been rejected`);
     }
