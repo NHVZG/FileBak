@@ -2,12 +2,15 @@ import {app, contextBridge, ipcMain, ipcRenderer} from 'electron';
 import path from "path";
 import fs from "fs";
 import {fileAccess} from  './fileAccess/file-access';
-
+import {MyTestableClass} from "../annotation/annotation-test";
 
 //初始化
 function testIpcHandleInit(win){
     //文件访问测试
     fileAccess();
+    //测试注解
+    let testable=new MyTestableClass();
+    console.log(testable.isTestable);
 
 
     //初始化

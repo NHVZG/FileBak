@@ -12,6 +12,24 @@ module.exports = defineConfig({
   },
   pluginOptions: {
     electronBuilder: {
+      //添加babel.js对注解的支持
+      chainWebpackMainProcess: config => {
+        let rule=config.module
+            .rule('babel')
+            .test(/\.js$/)
+            // .include.add(path.resolve(__dirname,'src/test')).add(path.resolve(__dirname,'src/background')).end()
+            .exclude.add(/node_modules/).add(path.resolve(__dirname,'src/frontEnd')).end()
+            .use('babel')
+            .loader('babel-loader')
+            .options({
+              presets: [['@babel/preset-env', { modules: false }]],
+              plugins: [
+                ['@babel/plugin-proposal-decorators', { legacy: true }],
+                ['@babel/plugin-proposal-class-properties', { loose: true }]
+              ]
+            });
+      },
+
       preload: {preload:'src/backend/preload.js',otherPreload:'src/test/backend/preload-test.js'},
       // Or, for multiple preload files:
       // preload: { preload: 'src/preload.js', otherPreload: 'src/preload2.js' }

@@ -17,7 +17,7 @@ function getSocketByClientID(wsServer,clientID){
     return websocket;
 }
 
-class BilderDeprecate {
+class BuilderDeprecate {
     constructor({tls,key,cert,port,blocks,log=true}) {
         this.tls=tls;
         this.log=log;
@@ -118,7 +118,7 @@ class WsServerWrapper{
         if (this.wsServer) {
             this.wsServer.wsServerTerminate();
         }
-        this.wsServer = new BilderDeprecate(conf);
+        this.wsServer = new BuilderDeprecate(conf);
         this.wsServer.wsServerBuild();
         return this;
     }

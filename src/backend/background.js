@@ -7,7 +7,7 @@ import * as path from "path";
 import {ipcHandleInit} from "./ipcProcess";
 import {testIpcHandleInit} from "../test/backend/index";
 import {fbu_config_init} from "./config/config-center";
-import {func} from "./ws/bilder-deprecate";
+
 
 
 const isDevelopment = process.env.NODE_ENV !== 'production'

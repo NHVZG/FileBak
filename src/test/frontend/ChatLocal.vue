@@ -76,6 +76,16 @@ export default {
     }
   },
   mounted() {
+    /*
+    vue 语法自身支持注解，因此不需在vue.config.js配置babel
+    function testable(target) {
+      target.prototype.isTestable = 123;
+    }
+    @testable
+    class MyTestableClass {}
+    */
+
+
     window.wsServer.onMsg(this.onServerMsg);
     window.wsClient.onMsg(this.onClientMsg);
     window.wsClient.onConnect(this.onClientConnect);
