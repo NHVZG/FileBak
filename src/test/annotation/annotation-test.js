@@ -4,20 +4,23 @@ function testable(target) {
     target.prototype.isTestable = 123;
 }
 
-function aop(target,name,descriptor){
-    let originalValue = descriptor.value;
-    descriptor.value=function(...args) {
-        console.log('before');
-        let result = originalValue.apply(this, args);
-        console.log('after');
-        return result;
+function aop(arg){
+    console.log(arg);
+    return (target,name,descriptor)=> {
+        let originalValue = descriptor.value;
+        descriptor.value = function (...args) {
+            console.log('before');
+            let result = originalValue.apply(this, args);
+            console.log('after');
+            return result;
+        }
     }
 }
 
 @testable
 class MyTestableClass {
 
-    @aop
+    @aop(555)
     test(){
        console.log('test');
     }
