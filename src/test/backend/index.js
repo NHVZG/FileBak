@@ -11,6 +11,7 @@ function testIpcHandleInit(win){
     //测试注解
     let testable=new MyTestableClass();
     console.log(testable.isTestable);
+    testable.test();
 
 
     //初始化
