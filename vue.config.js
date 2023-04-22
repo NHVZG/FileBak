@@ -30,7 +30,10 @@ module.exports = defineConfig({
             });
       },
 
-      preload: {preload:'src/backend/preload.js',otherPreload:'src/test/backend/preload-test.js'},
+      preload: {
+        preload:'src/backend/v1/preload.js',
+        otherPreload:'src/test/backend/preload-test.js'
+      },
       // Or, for multiple preload files:
       // preload: { preload: 'src/preload.js', otherPreload: 'src/preload2.js' }
       outputDir: "dist/electron",

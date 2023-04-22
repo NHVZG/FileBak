@@ -35,7 +35,7 @@
 </template>
 
 <script>
-import {__isSuccess} from "@/frontEnd/utils/util";
+import {__isSuccess} from "@/frontEnd/v1/utils/util";
 
 export default {
   name: "Chat",

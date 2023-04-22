@@ -1,4 +1,7 @@
 <template>
+  <div style="text-align: left">
+    <p>rtc: 服务端启动ws服务，再连接ws服务 ，另一客户端再连接ws服务，把clientID写入rtc对方clientID再点击start,再sendrtc</p>
+  </div>
   <el-form-item>
     <el-col :span="7">
       <el-input v-model="host"/>
@@ -22,7 +25,7 @@
     <br>
     <el-button type="primary" @click="start">start</el-button>
     <el-button type="primary" @click="sendChannel">sendrtc</el-button>
-    <el-input v-model="rtcAddr" />
+    <el-input v-model="rtcAddr" placeholder="rtc对方clientID"/>
   </el-form-item>
   <el-form-item>
     <el-col :span="10">

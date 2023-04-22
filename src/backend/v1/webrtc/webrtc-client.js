@@ -39,7 +39,7 @@ function heartbeat() {
 //. websocket开启
 function onWsOpen(){
     console.log('open');
-    wsConnection=this;
+    //wsConnection=this;
     heartbeat();
 }
 
@@ -58,7 +58,7 @@ function onWsError(){
 //.心跳ping帧处理
 function onWsPing(){
     console.log('ping');
-    wsConnection=this;
+    //wsConnection=this;
     heartbeat();
 }
 
@@ -96,17 +96,20 @@ async function onSdpReceive(sdp,remoteClientID){
         rtcConnection = createWebRtcConnection();
     }
     let desc = new RTCSessionDescription(sdp);
-    
+
+    //非stable的则回滚，退出，等待对方先发起协商
     if (rtcConnection.signalingState !== "stable") {
         __log("  - But the signaling state isn't stable, so triggering rollback");
         // Set the local and remove descriptions for rollback; don't proceed
         // until both return.
         await Promise.all([
+            //防止两端请求碰撞，同时发起导致协商失败，rollback可以回滚signalingState到stable状态
+            // https://blog.mozilla.org/webrtc/perfect-negotiation-in-webrtc/
             rtcConnection.setLocalDescription({type: "rollback"}),
             rtcConnection.setRemoteDescription(desc)
         ]);
         return;
-    } else {
+    } else {//stable状态下则被动设置sdp，
         __log ("  - Setting remote description");
         await rtcConnection.setRemoteDescription(desc);
     }

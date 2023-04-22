@@ -4,9 +4,9 @@ import { app, protocol, BrowserWindow,ipcMain } from 'electron'
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer'
 import * as path from "path";
-import {ipcHandleInit} from "./ipcProcess";
+import {ipcHandleInit} from "./v1/ipcProcess";
 import {testIpcHandleInit} from "../test/backend/index";
-import {fbu_config_init} from "./config/config-center";
+import {fbu_config_init} from "./v1/config/config-center";
 
 
 
@@ -16,7 +16,7 @@ const isDevelopment = process.env.NODE_ENV !== 'production'
 const current_env='prod';
 const config={
   test:{
-    preload:path.resolve(__dirname,'otherPreload.js')
+    preload:path.resolve(__dirname,'otherPreload.js')//构建完（dist）目录相对路径
   },
   prod:{
     preload:path.join(__dirname,'preload.js')

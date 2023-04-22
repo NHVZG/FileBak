@@ -10,7 +10,6 @@ const fbuConfigBuilder= {
         client:{
             turn: {
                 iceServers:null,
-                host:'192.168.1.5',
                 remoteClientID:''
             },
             ws:{

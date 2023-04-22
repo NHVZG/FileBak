@@ -26,10 +26,9 @@ function __log(text,error=false){
 
 function __result(success){
     return success?
-        (data,msg)=>({code:1,msg:msg||'success',data:data}):
-        (msg,code)=>({code:code===undefined?-1:code,msg:msg||'fail'})
+        (data,msg)=>({code:1,msg:msg||'success',data:data,success}):
+        (msg,code,data)=>({code:code===undefined?-1:code,msg:msg||'fail',data,success})
 }
-
 
 
 export {

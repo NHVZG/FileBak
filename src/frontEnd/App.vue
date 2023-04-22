@@ -5,7 +5,7 @@
 
 <script>
 import TestIndex from "../test/frontend/TestIndex.vue";
-import Index from "../frontEnd/components/Index.vue";
+import Index from "../frontEnd/v1/components/Index.vue";
 
 export default {
   name: 'App',
