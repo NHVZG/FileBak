@@ -1,4 +1,4 @@
-import {__flat, __data} from "../utils/util";
+import {__time, __flat, __wsmsg} from "../utils/util";
 import {AFTER, log} from "../utils/decorator";
 import {RTCIceCandidate, RTCPeerConnection, RTCSessionDescription} from "wrtc";
 import {WebSocket} from "ws";
@@ -7,6 +7,7 @@ class WsBuilder{
     WS='ws';
     RTC='rtc';
     CHANNEL='channel';
+    MSG='msg';
 
     WS_CREATE='WS_CONNECTION_CREATE_EVENT';     //. ws连接创建事件
     RTC_CREATE='RTC_CONNECTION_CREATE_EVENT';   //. rtc连接创建事件
@@ -27,14 +28,26 @@ class WsBuilder{
 
     //` 数据构建
     data(){
-        return __data();
+        return __wsmsg();
+    }
+
+    //` 柯里化
+    flat(...func){
+        return __flat(...func);
     }
 
     //` if then
-    option(match,...opt){
+    option(match,opt,...arg){
+        let then=(callback)=>{
+            callback(...arg);
+            return then;
+        }
         return {
             then:(callback)=>{
-                if(opt.includes(match))return callback();
+                if(opt.includes(match)){
+                    callback(...arg);
+                    return then;
+                }
             }
         }
     }
@@ -48,7 +61,7 @@ class WsBuilder{
 
     //` 调用方法
     call(key,...arg){
-        return this.funcMap[key]?.(...arg);
+        return this.funcMap[key]&&this.funcMap[key](...arg);
     }
 
     //% 默认 - ws.close事件
@@ -115,6 +128,11 @@ class WsBuilder{
     onChannelClose(){
         this.rtcClose();
     }
+    //% 默认 - channel.onError事件
+    @log('channel Error')
+    onChannelError(){
+        this.rtcClose();
+    }
 
     //% 默认 - channel.onMessage事件
     @log('channel Message: ${event.data}')
@@ -147,7 +165,7 @@ class WsBuilder{
     async createOffer(){
         let offer=await this.rtc.createOffer();
         if (this.rtc.signalingState !== "stable") {
-            return throw new Error("rtc connection isn't stable");
+            throw new Error("rtc connection isn't stable");
         }
         return offer;
     }
@@ -216,7 +234,13 @@ class WsBuilder{
         process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;            //允许自签证书
         if(conf){
             this.conf=conf?{...this.conf,...conf}:this.conf;
-            this.iceServers=this.conf?.rtc?.iceServers||this.conf?.channel?.iceServers;
+            //this.iceServers=this.conf?.rtc?.iceServers||this.conf?.channel?.iceServers;
+            if(this.conf&&this.conf.rtc&&this.conf.rtc.iceServers){
+                this.iceServers=this.conf.rtc.iceServers;
+            }
+            else if(this.conf&&this.conf.channel&&this.conf.channel.iceServers){
+                this.iceServers=this.conf.channel.iceServers;
+            }
             if(conf.channel)this.conf.rtc=conf.channel;
         }
         switch (type){
@@ -228,20 +252,21 @@ class WsBuilder{
 
     //. 通用发送方法
     send(type,data){
-        let remote=true;
         switch (type){
             case 'sdp-reply':
             case 'ice':
-            case 'sdp-request':  remote=true;break;
-            case 'ws-message':  remote=false;break;
+            case 'sdp-request':   break;
+            case 'ws-message':   break;
             case 'channel':         return this.channel.send(data);
         }
-        let content= {};
-        content.type=type;
-        content.data=data;
-        content.from=this.clientID;
-        if(remote)content.to=this.rtcRemoteClientID;
-        this.ws.send(content);
+        let json= this.data().data(
+            type,
+            data,
+            this.clientID,
+            this.rtcRemoteClientID);
+        //if(remote)content.to=this.rtcRemoteClientID;
+        this.ws.send(JSON.stringify(json));
+        this.call(this.MSG,json);
     }
 
     //. 事件监听
@@ -273,6 +298,7 @@ class WsBuilder{
             case 'rtc-channel-open':                             return this.channel.onopen=__flat(_this.onChannelOpen,callback);
             case 'rtc-channel-message':                       return this.channel.onmessage=__flat(_this.onChannelMessage,callback);
             case 'rtc-channel-close':                             return this.channel.onclose=__flat(_this.onChannelClose,callback);
+            case 'rtc-channel-error':                             return this.channel.onerror=__flat(_this.onChannelError,callback);
 
         }
     }

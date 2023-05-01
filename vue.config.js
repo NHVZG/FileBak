@@ -32,6 +32,7 @@ module.exports = defineConfig({
 
       preload: {
         preload:'src/backend/v1/preload.js',
+        //preload:'src/backend/v2/preload.js',
         otherPreload:'src/test/backend/preload-test.js'
       },
       // Or, for multiple preload files:

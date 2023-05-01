@@ -3,7 +3,7 @@ import {WebSocketServer }   from 'ws';
 import  https from "https";
 import  http from "http";
 import Turn from "node-turn";
-import {__res,__data} from "../utils/util";
+import {__res, __wsmsg,__flat} from "../utils/util";
 import {AFTER, log} from "../utils/decorator";
 
 function getAddressByIncomeMessage(im){
@@ -25,7 +25,7 @@ class WsServerBuilder{
         this.turnServer=null;
         this.wsServer=null;
         this.timer=null;
-        this.conf=null;
+        this.conf= {};
         this.blocks=[];
 
         this.funcMap={};
@@ -40,7 +40,7 @@ class WsServerBuilder{
 
     //` 调用方法
     call(key,...arg){
-        return this.funcMap[key]?.(...arg);
+        return this.funcMap[key]&&this.funcMap[key](...arg);
     }
 
     //` 过滤ip
@@ -51,7 +51,7 @@ class WsServerBuilder{
 
     //` 数据构建
     data(){
-        return __data();
+        return __wsmsg();
     }
 
     //` 节点构建then
@@ -72,7 +72,9 @@ class WsServerBuilder{
     util(){
         let _this=this;
         return {
-            clients:(callback)=>_this.wsServer.clients((ws)=>callback(ws)),
+            clients:(callback)=>{
+                return   _this.wsServer.clients.forEach((ws)=>callback(ws))
+            },
             wsServer:(callback)=>callback(_this.wsServer),
             then:(preStep)=>_this.node(preStep)
         }
@@ -144,13 +146,14 @@ class WsServerBuilder{
 
 
     //. wsServer构建并启动
-    build(conf){
-        this.conf=conf;
-        if(conf.ws) {
+    build(type,conf){
+        if(type==='ws') {
+            this.conf.ws=conf;
             this.wsServerBuild();
             this.call(this.WS_SERVER_CREATE);
         }
-        if(conf.turn){
+        if(type==='turn'){
+            this.conf.turn=conf;
             this.turnServerBuild();
             this.call(this.TURN_SERVER_CREATE);
         }
@@ -214,9 +217,12 @@ class WsServerBuilder{
     //. 定时器
     interval(ms,callback){
         let _this=this;
-        return this.wrapper(()=>{
+        return (key)=>{
+            _this.timer=setInterval(_this.wrapper(callback)(key),ms);
+        };
+        /*return this.wrapper(()=>{
             _this.timer=setInterval(callback,ms);
-        });
+        });*/
     }
 
     //. 事件监听
@@ -227,24 +233,25 @@ class WsServerBuilder{
             case 'close':                return this.wsServer.on('close',__flat(this.onWsServerClose,callback));
             case 'ws-pong':          return callee.on('pong',__flat(this.onWsPong,callback));
             case 'ws-message':    return callee.on('message', (data,isBinary)=>{
-                _this.onWsMessage(data,isBinary);
-                if(callback)callback(JSON.parse(data.toString()));
-            });
+                                                                _this.onWsMessage(data,isBinary);
+                                                                if(callback)callback(JSON.parse(data.toString()));
+                                                            });
         }
     }
 
-    //. 发送信息
-    sendChat(msg,to,from){
-        from?
-            this.unicast(this.data().message(msg,from,to)):
-            this.broadcast(this.data().message(msg,'server',to));
-        this.call(this.MSG,from||'server',msg);
-    }
 
     //. ws发送信息
-    send(ws,type){
+    send(type,data){
         switch (type){
-            case "signed":ws.send(this.data().signed(ws.clientID));
+            case "signed":        return this.unicast(data);
+            case "message":     data.to?
+                                                this.unicast(data):
+                                                this.broadcast(data);
+                                            return this.call(this.MSG,data);
+            case "ice":
+            case "sdp-request":
+            case "sdp-reply":     return this.unicast(data);
+
         }
     }
 

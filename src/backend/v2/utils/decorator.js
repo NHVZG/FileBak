@@ -11,7 +11,8 @@ function log(a,aspect=BEFORE){
 
             let result
             try {
-                result = originalValue.apply(this, args);
+                //result = originalValue.apply(this, args);
+                result = originalValue.apply(target, args);
             }catch (err){
                 console.dir(err);
                 return;
@@ -45,7 +46,7 @@ function compileStr(target,func,str,argsArr,res){
         propArray[0]=propArray[0]==='@'?'__res':propArray[0];//@作为返回结果的引用标志
         let idx=0,obj=null;
         while(propArray.length>idx){
-            obj=obj[propArray[idx]];
+            obj=(obj?obj:data)[propArray[idx]];
             idx++;
         }
         if(obj) {

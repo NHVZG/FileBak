@@ -1,3 +1,4 @@
+import path from "path";
 
 function __res(){
     let res={};
@@ -35,19 +36,32 @@ function __flat(...func){
     }
 }
 
+function __time(){
+    let date=new Date();
+    return date.toLocaleDateString().replaceAll('/','-')+' '+ date.toTimeString().split(' ')[0];
+}
+
 //` 数据构建
-function __data(){
-    return{
-        signed:(clientID)=>({type: 'signed',from:'server',to:clientID,clientID}),
-        message:(message,from,to)=>({type:'message',from,to,message}),
-        data:(type,data,from,to)=>({type,from,to,data})
+
+function __wsmsg(){
+    let o=(type,data,from,to)=>({type,data,from,to,time:__time()});
+    return  {
+        signed:clientID=>o('signed',{clientID},'server',clientID),
+        message:(message,from,to)=>o('message',{message},from,to),
+        data:o
     }
 }
 
 
+//` 构建路径
+function __resolvePublic(relative){
+    return path.resolve(__static,relative);
+}
 
 export {
+    __wsmsg,
+    __time,
     __flat,
     __res,
-    __data
+    __resolvePublic
 }
