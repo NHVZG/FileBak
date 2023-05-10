@@ -2,7 +2,7 @@ import {contextBridge, ipcMain, ipcRenderer} from "electron";
 import {createClient, createServer} from "./main/p2p";
 import {FBU_CONF, INIT_TYPE_MAIN, INIT_TYPE_RENDER} from "./config/config-center";
 import {initMain2Render as initTestMain2Render, initRender2Main as initTestRender2Main} from "./bridge-test";
-import {dir} from "./main/files";
+import {dir,listDriver} from "./main/files";
 
 /**
 * 暴露方法
@@ -110,7 +110,9 @@ function initRender2Main({server,client}={}){
     });
     //files
     render('files',{
-        dir:                              (base)=>dir(base)
+        dir:                              (base)=>dir(base),
+        //drivers:                     (callback)=>listDriver(callback)
+        drivers:                        ()=>listDriver()
     })
 }
 
@@ -147,7 +149,8 @@ function initIpcMain(){
     let conf=initMain2Render();
     initRender2Main({
         server:createServer(conf.server),
-        client:createClient(conf.client)});
+        client:createClient(conf.client)
+    });
 
     initTestRender2Main({render,main},initTYPE);
     initTestMain2Render({render,main},initTYPE);
