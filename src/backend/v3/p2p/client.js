@@ -244,18 +244,18 @@ class WsBuilder{
             case 'ws-message':                                      return this.ws.on('message', flat(_this.onWsMessage,callback));
 
             //rtc
-            case 'rtc-ice-candidate':                            return this.rtc.onicecandidate=event=> {
+            case 'rtc-ice-candidate':                            return this.rtc.onicecandidate=event=> {                                                                                                   //` ice-candidate交换初始化
                                                                                      if (!event.candidate) return;
                                                                                      _this.onIceCandidate(event);
                                                                                      return callback(event);
                                                                                  };
-            case 'rtc-ice-connection-state-change':    return this.rtc.oniceconnectionstatechange=flat(_this.onIceConnectionStateChange,callback);
-            case 'rtc-ice-gathering-state-change':       return this.rtc.onicegatheringstatechange=flat(_this.onIceGatheringStateChange,callback);
-            case 'rtc-connection-state-change':           return this.rtc.onconnectionstatechange=flat(_this.onConnectionStateChange,callback);
-            case 'rtc-signaling-state':                            return this.rtc.onsignalingstatechange=flat(_this.onSignalingStateChange,callback);
-            case 'rtc-negotiation-needed':                   return this.rtc.onnegotiationneeded=flat(_this.onNegotiationNeeded,callback);
-            case 'rtc-track':                                             return this.rtc.ontrack=flat(_this.onTrack);
-            case 'rtc-data-channel':                               return this.rtc.ondatachannel=flat(_this.onDataChannel,callback);
+            case 'rtc-ice-connection-state-change':    return this.rtc.oniceconnectionstatechange=flat(_this.onIceConnectionStateChange,callback);        //` ice-connection连接变动事件（ice-connection在检测网络变动，如stun/turn切换之类）
+            case 'rtc-ice-gathering-state-change':       return this.rtc.onicegatheringstatechange=flat(_this.onIceGatheringStateChange,callback);            //` ice-candidate 采集状态
+            case 'rtc-connection-state-change':           return this.rtc.onconnectionstatechange=flat(_this.onConnectionStateChange,callback);                //` 连接状态发生变化（有新的通道加入RTCRtpReceiver时）
+            case 'rtc-signaling-state':                            return this.rtc.onsignalingstatechange=flat(_this.onSignalingStateChange,callback);                       //` 信令服务器协商状态变动事件
+            case 'rtc-negotiation-needed':                   return this.rtc.onnegotiationneeded=flat(_this.onNegotiationNeeded,callback);                              //` 开始协商事件
+            case 'rtc-track':                                             return this.rtc.ontrack=flat(_this.onTrack);                                                                                             //` 数据传输事件(rtc)
+            case 'rtc-data-channel':                               return this.rtc.ondatachannel=flat(_this.onDataChannel,callback);                                                     //` 自定义数据通道事件
 
             //channel
             case 'rtc-channel-open':                             return this.channel.onopen=flat(_this.onChannelOpen,callback);
