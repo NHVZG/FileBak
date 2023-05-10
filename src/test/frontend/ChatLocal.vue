@@ -65,6 +65,7 @@
 </template>
 
 <script>
+//使用 v1 prod preload
 export default {
   name: "ChatLocal",
   data(){

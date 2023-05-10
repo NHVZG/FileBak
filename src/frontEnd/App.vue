@@ -1,20 +1,20 @@
 <template>
-<!--  <TestIndex/>-->
+<!--  <TestIndex/> --> <!--v1-->
 <!--  <Index/>-->
-  <IndexV2/>
+  <IndexV3/> <!--v3-->
 </template>
 
 <script>
 import TestIndex from "../test/frontend/TestIndex.vue";
 import Index from "../frontEnd/v1/components/Index.vue";
-import IndexV2 from "./v2/Index-v2.vue";
+import IndexV3 from "./v3/Index.vue";
 
 export default {
   name: 'App',
   components: {
     TestIndex,
     Index,
-    IndexV2
+    IndexV3
   }
 }
 </script>

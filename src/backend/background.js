@@ -5,6 +5,7 @@ import { createProtocol } from 'vue-cli-plugin-electron-builder/lib'
 import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer'
 import * as path from "path";
 import {ipcHandleInit} from "./v1/ipcProcess";
+import {initIpcMain,setWin} from "./v3/bridge";
 import {testIpcHandleInit} from "../test/backend/index";
 import {fbu_config_init} from "./v1/config/config-center";
 
@@ -76,6 +77,7 @@ app.on('activate', () => {
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
+//` 发生在vue mounted 之后
 app.on('ready', async () => {
   if (isDevelopment && !process.env.IS_TEST) {
     // Install Vue Devtools
@@ -85,17 +87,23 @@ app.on('ready', async () => {
       console.error('Vue Devtools failed to install:', e.toString())
     }
   }
+  // .v3 - 先注册监听事件 再设置窗体句柄，否则vue在窗体创建后便可执行mounted，而ipcMain未注册导致调用失败
+  initIpcMain();
   //创建窗口
   let win=await createWindow();
   //let win1=await createWindow();
+
   //测试入口
   testIpcHandleInit(win);
+  //. v1
   //主进程事件监听
-  ipcHandleInit(win);
+  //ipcHandleInit(win);
   //配置初始化
-  fbu_config_init();
+  //fbu_config_init();
+  //. v3
+  setWin(win);
 
-  //buildWsServer();
+
 })
 
 // Exit cleanly on request from parent process in development mode.
