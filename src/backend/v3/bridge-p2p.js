@@ -1,14 +1,21 @@
 import {FBU_CONF, INIT_TYPE_MAIN, INIT_TYPE_RENDER} from "./config/config-center";
 import {main, render} from "./bridge";
-import {createClient, createServer} from "./main/p2p";
+import {createClient, createServer} from "./core/main/p2p";
+
+const WsMsgType={};                     //客户端自定义ws信息解析
+const WsServerMsgType={};          //服务端自定义ws信息解析
+let server;
+let client;
 
 //, main进程调用render
 function initMain2Render(){
-    let server={
+    let serverConf={
+        wsMessageType:WsServerMsgType,
         onWsMessage:main('wsServer','onMessage'),
         onWsMessageSend:main('wsServer','onMessageSend')
     };
-    let client={
+    let clientConf={
+        wsMessageType:WsMsgType,
         onWsConnect:main('wsClient','onWsConnect'),
         onWsMessage:main('wsClient','onWsMessage'),
         onWsMessageSend:main('wsClient','onWsMessageSend'),
@@ -22,7 +29,7 @@ function initMain2Render(){
         onChannelError:main('webrtc','onChannelError'),
         onChannelClose:main('webrtc','onChannelClose')
     };
-    return {server,client};
+    return {serverConf,clientConf};
 }
 
 //, render进程调用main
@@ -67,15 +74,15 @@ function initRender2Main({server,client}={}){
 function initP2P(initType){
     switch (initType){
         case INIT_TYPE_MAIN:            let conf=initMain2Render();
-                                                           initRender2Main({
-                                                               server:createServer(conf.server),
-                                                               client:createClient(conf.client)
-                                                           });
+                                                           server=createServer(conf.serverConf);
+                                                           client=createClient(conf.clientConf);
+                                                           initRender2Main({server,client});
                                                            break;
+
         case INIT_TYPE_RENDER:        initMain2Render();
                                                            initRender2Main();
                                                            break;
     }
 }
 
-export {initP2P}
+export {initP2P,server,client,WsMsgType,WsServerMsgType}

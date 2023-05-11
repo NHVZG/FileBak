@@ -1,7 +1,7 @@
 import fs from "fs";
 import * as os from 'os';
 import * as child_process from "child_process";
-import {__execAsync} from "../utils/util";
+import {__execAsync} from "../../utils/util";
 
 const DRIVER=0;                 //' 驱动器
 const DIRECTORY=1;          //' 文件夹

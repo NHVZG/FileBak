@@ -1,17 +1,13 @@
 import {RTCPeerConnection} from "wrtc";
 import {WsServerBuilder} from '../p2p/server';
 import {WsBuilder} from '../p2p/client';
-import {__log} from "@/backend/v1/utils/util";
 
-let client=null;
-
-let server=null;
 
 //. 创建服务端
 function createServer({
                           wsMessageType={},                                                                                                  //. 自定义信息类型处理
                           onWsMessage=data=>{},
-                          onWsMessageSend=data=>{} }={},global=false){
+                          onWsMessageSend=data=>{} }={}){
     let builder=new WsServerBuilder();
     builder.register(builder.ON_WS_MESSAGE_SEND,onWsMessageSend);                                             //. 发送消息回调
 
@@ -44,11 +40,6 @@ function createServer({
             builder.on('ws-pong', (buffer) => ws.isAlive = true, ws);
         });
     });
-
-
-    if(global){
-        server=builder;
-    }
     return builder;
 }
 
@@ -67,7 +58,7 @@ function createClient({
                             onChannelOpen=event=>{},
                             onChannelMessage=(data,event,remoteClientID)=>{},
                             onChannelError=event=>{},
-                            onChannelClose=event=>{} },global=false){
+                            onChannelClose=event=>{} }){
     let HEARTBEAT='heartbeat';
 
     let builder=new WsBuilder();
@@ -163,15 +154,10 @@ function createClient({
         });
         builder.on('rtc-track');
     });
-    if(global){
-        client=builder;
-    }
     return builder;
 }
 
 export {
     createClient,
     createServer,
-    server,
-    client
 }

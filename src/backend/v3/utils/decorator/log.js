@@ -11,8 +11,8 @@ function log(a,aspect=BEFORE){
 
             let result
             try {
-                //result = originalValue.apply(this, args);
-                result = originalValue.apply(target, args);
+                result = originalValue.apply(this, args);
+                //result = originalValue.apply(target, args);
             }catch (err){
                 console.dir(err);
                 return;

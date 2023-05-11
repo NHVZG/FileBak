@@ -1,5 +1,5 @@
 import {FBU_CONF,INIT_TYPE_MAIN,INIT_TYPE_RENDER} from "./config/config-center";
-import {createClient} from "./main/p2p";
+import {createClient} from "./core/main/p2p";
 import {render,main} from "./bridge";
 
 let client1,client2;
@@ -8,8 +8,8 @@ function getClient(name){
     return name==='client1'?client1:client2;
 }
 
-function initMain2Render(initType){
-    let test=name=>({
+function initMain2Render(name){
+    return {
         onWsConnect:main('testWsClient','onWsConnect','test-onWsConnect',name),
         //onWsMessage:main('testWsClient','onWsMessage','test-onWsMessage',name),
         //onWsMessageSend:main('testWsClient','onWsMessageSend','test-onWsMessageSend',name),
@@ -22,20 +22,12 @@ function initMain2Render(initType){
         onChannelMessage:main('testWebrtc','onChannelMessage','test-onChannelMessage',name),
         onChannelError:main('testWebrtc','onChannelError','test-onChannelError',name),
         onChannelClose:main('testWebrtc','onChannelClose','test-onChannelClose',name),
-    });
-
-    let client1Conf=test('client1');
-    let client2Conf=test('client2');
-
-    if(initType===INIT_TYPE_MAIN) {
-        client1 = createClient(client1Conf);
-        client2 = createClient(client2Conf);
-    }
+    };
 }
 
 
 
-function initRender2Main(initType){
+function initRender2Main(){
     render('testWsClient',{
         connect:                         (name,conf)=>getClient(name).connect(getClient(name).TYPE_WS,{ws:conf}),
         send:                               (name,{message})=>getClient(name).send('ws-message', {message}),
@@ -63,8 +55,17 @@ function initRender2Main(initType){
 
 
 function initTest(initType){
-    initMain2Render(initType);
-    initRender2Main(initType);
+    switch (initType){
+        case INIT_TYPE_MAIN:            client1=createClient(initMain2Render('client1'));
+                                                           client2=createClient(initMain2Render('client2'));
+                                                           initRender2Main();
+                                                           break;
+
+        case INIT_TYPE_RENDER:        initMain2Render('client1');
+                                                           initMain2Render('client2');
+                                                           initRender2Main();
+                                                           break;
+    }
 }
 
 export {

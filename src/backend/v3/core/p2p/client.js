@@ -1,7 +1,7 @@
-import {AFTER, log} from "@/backend/v2/utils/decorator";
+import {AFTER, log} from "../../utils/decorator/log";
 import {RTCIceCandidate, RTCSessionDescription} from "wrtc";
 import {WebSocket} from "ws";
-import {__time} from "../utils/util";
+import {__time} from "../../utils/util";
 
 
 class WsBuilder{
@@ -33,7 +33,7 @@ class WsBuilder{
         let func= {
             flat:(...func)=>{
                 return (...arg)=>{
-                    return func.filter(f=>f).reduce((r,f)=>f(...arg));
+                    return func.filter(f=>f).map((f)=>f.bind(_this)(...arg));
                 }
             }
         }
@@ -67,7 +67,7 @@ class WsBuilder{
     onWsOpen(){}
 
     @log('ws ping')                                                                                                      //% 默认 - ws.ping事件
-    onWsPing(){}
+    onWsPing(){console.log(this);}
 
    onWsMessage(){}                                                                                                     //% 默认 - ws.message事件
 
@@ -236,6 +236,7 @@ class WsBuilder{
         let _this=this;
         let flat=this.util()('flat');
         switch (type){
+            // on 方法所有this指向改为WsBuilder，指定到事件触发调用者则需手动指定
             // ws
             case 'ws-close':                                            return this.ws.on('close',flat(_this.onWsClose,callback));
             case 'ws-open':                                            return this.ws.on('open',flat(_this.onWsOpen,callback));

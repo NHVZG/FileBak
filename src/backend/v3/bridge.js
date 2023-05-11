@@ -1,5 +1,4 @@
 import {contextBridge, ipcMain, ipcRenderer} from "electron";
-import {createClient, createServer} from "./main/p2p";
 import {FBU_CONF, INIT_TYPE_MAIN, INIT_TYPE_RENDER} from "./config/config-center";
 import {
     initTest,
@@ -18,7 +17,6 @@ import {initFiles} from './bridge-file';
 */
 
 let exposeMap={};       //. 暴露方法
-let handlerList=[];       //. main注册方法
 let win;                          //. 窗体
 
 let initTYPE;
@@ -54,29 +52,26 @@ function main(group,name,channel,...p){
     return null;
 }
 
+function init(){
+    initTest(initTYPE);
+    initP2P(initTYPE);
+    initFiles(initTYPE);
+}
 
 //. render进程先于main线程初始化 因此需要分离出两个方法
 //. 初始化ipcRenderer
 function exposeAPI(){
     initTYPE=INIT_TYPE_RENDER;
+    init();
 
     initVersion();
-    initTest(initTYPE);
-
-    initP2P(initTYPE);
-    initFiles(initTYPE);
-
     Object.entries(exposeMap).map(e=>contextBridge.exposeInMainWorld(e[0],e[1]));
 }
 
 //. 初始化ipcMain
 function initIpcMain(){
     initTYPE=INIT_TYPE_MAIN;
-
-    initTest(initTYPE);
-
-    initP2P(initTYPE);
-    initFiles(initTYPE);
+    init();
 }
 
 //. 设置win窗体句柄，由于初始化主线程在窗体创造前，vue-mounted才可以调用到，最后才可设置win

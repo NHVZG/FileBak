@@ -1,10 +1,10 @@
 import crypto from "crypto";
-import {log,AFTER} from "../utils/decorator";
+import {AFTER, log} from "../../utils/decorator/log";
 import https from "https";
 import http from "http";
 import {WebSocketServer} from "ws";
 import Turn from "node-turn";
-import {__time} from "../utils/util";
+import {__time} from "../../utils/util";
 
 
 function getAddressByIncomeMessage(im){
@@ -59,13 +59,13 @@ class WsServerBuilder{
             wrap:(outer,receiveFunc)=>{
                 return (key)=>{
                     return receiveFunc?
-                        (...arg)=>outer(()=>func[key](...arg)):
-                        (...arg)=>outer(func[key](...arg));
+                        (...arg)=>outer.bind(_this)(()=>func[key].bind(_this)(...arg)):
+                        (...arg)=>outer.bind(_this)(func[key].bind(_this)(...arg));
                 };
             },
             flat:(...func)=>{
                 return (...arg)=>{
-                    return func.filter(f=>f).map((f)=>f(...arg));
+                    return func.filter(f=>f).map((f)=>f.bind(_this)(...arg));
                 }
             }
         }
@@ -215,12 +215,13 @@ class WsServerBuilder{
 
     //, 事件监听
     on(type,callback,callee){
+        let _this=this;
         let flat=this.util()('flat');
         switch (type){
-            case 'ws-connection':      this.wsServer.on('connection',flat(this.onWsConnection,callback));break;
-            case 'ws-server-close':     this.wsServer.on('close',flat(this.onWsServerClose,callback));break;
-            case 'ws-pong':                callee.on('pong',(...arg)=>flat(this.onWsPong,callback)(callee,...arg));break;
-            case 'ws-message':          callee.on('message', flat(this.onWsMessage,callback));break;
+            case 'ws-connection':      this.wsServer.on('connection',flat(_this.onWsConnection,callback));break;
+            case 'ws-server-close':     this.wsServer.on('close',flat(_this.onWsServerClose,callback));break;
+            case 'ws-pong':                callee.on('pong',(...arg)=>flat(_this.onWsPong,callback)(callee,...arg));break;
+            case 'ws-message':          callee.on('message', flat(_this.onWsMessage,callback));break;
         }
     }
 

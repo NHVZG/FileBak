@@ -1,5 +1,5 @@
 import {render} from "./bridge";
-import {dir, listDriver} from "./main/files";
+import {dir, listDriver} from "./core/main/files";
 
 
 function initMain2Render(initType){
