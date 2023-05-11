@@ -48,17 +48,17 @@ function initRender2Main({server,client}={}){
     render('webrtc',{
         rtcTerminate:             data=>client.rtcClose(),
         rtcConnect:                data=>client.connect(client.TYPE_RTC,{
-            rtcRemoteClientID:data.remoteClientID,
-            rtc: {
-                iceServers:FBU_CONF.rtc.iceServers
-            }
-        }),
+                                                rtcRemoteClientID:data.remoteClientID,
+                                                rtc: {
+                                                    iceServers:FBU_CONF.rtc.iceServers
+                                                }
+                                            }),
         channelConnect:        data=>client.connect(client.TYPE_CHANNEL,{
-            rtcRemoteClientID:data.remoteClientID,
-            channel: {
-                iceServers:FBU_CONF.rtc.iceServers
-            }
-        }),
+                                                rtcRemoteClientID:data.remoteClientID,
+                                                channel: {
+                                                    iceServers:FBU_CONF.rtc.iceServers
+                                                }
+                                            }),
         channelSend:             data=>client.send('channel',data),
         channelTerminate:     data=>client.channelClose()
     });
