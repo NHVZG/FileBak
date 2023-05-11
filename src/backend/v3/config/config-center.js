@@ -31,8 +31,8 @@ let FBU_CONF={
     }
 }
 
-const INIT_TYPE_RENDER =1;
-const INIT_TYPE_MAIN =2;
+const INIT_TYPE_RENDER =1;      //初始化渲染进程事件
+const INIT_TYPE_MAIN =2;          //初始化主进程事件
 
 
 export {

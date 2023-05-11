@@ -1,5 +1,6 @@
 import {FBU_CONF,INIT_TYPE_MAIN,INIT_TYPE_RENDER} from "./config/config-center";
 import {createClient} from "./main/p2p";
+import {render,main} from "./bridge";
 
 let client1,client2;
 
@@ -7,7 +8,7 @@ function getClient(name){
     return name==='client1'?client1:client2;
 }
 
-function initMain2Render({render=()=>{},main=()=>{}}={},initTYPE){
+function initMain2Render(initType){
     let test=name=>({
         onWsConnect:main('testWsClient','onWsConnect','test-onWsConnect',name),
         //onWsMessage:main('testWsClient','onWsMessage','test-onWsMessage',name),
@@ -26,7 +27,7 @@ function initMain2Render({render=()=>{},main=()=>{}}={},initTYPE){
     let client1Conf=test('client1');
     let client2Conf=test('client2');
 
-    if(initTYPE===INIT_TYPE_MAIN) {
+    if(initType===INIT_TYPE_MAIN) {
         client1 = createClient(client1Conf);
         client2 = createClient(client2Conf);
     }
@@ -34,7 +35,7 @@ function initMain2Render({render=()=>{},main=()=>{}}={},initTYPE){
 
 
 
-function initRender2Main({render=()=>{},main=()=>{}}={},initTYPE){
+function initRender2Main(initType){
     render('testWsClient',{
         connect:                         (name,conf)=>getClient(name).connect(getClient(name).TYPE_WS,{ws:conf}),
         send:                               (name,{message})=>getClient(name).send('ws-message', {message}),
@@ -60,7 +61,14 @@ function initRender2Main({render=()=>{},main=()=>{}}={},initTYPE){
     });
 }
 
+
+function initTest(initType){
+    initMain2Render(initType);
+    initRender2Main(initType);
+}
+
 export {
+    initTest,
     initMain2Render,
     initRender2Main
 }

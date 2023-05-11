@@ -9,6 +9,7 @@ let server=null;
 
 //. 创建服务端
 function createServer({
+                          wsMessageType={},                                                                                                  //. 自定义信息类型处理
                           onWsMessage=data=>{},
                           onWsMessageSend=data=>{} }={},global=false){
     let builder=new WsServerBuilder();
@@ -38,6 +39,7 @@ function createServer({
                                                                         onWsMessage(data);
                                                                     }
                 }
+                wsMessageType[data.type]&&wsMessageType[data.type](data);
             }, ws);
             builder.on('ws-pong', (buffer) => ws.isAlive = true, ws);
         });
@@ -53,6 +55,7 @@ function createServer({
 
 //. 创建客户端
 function createClient({
+                            wsMessageType={},                                                                                                                                       //. 自定义信息类型处理
                             onWsConnect=(clientID,json)=>{},
                             onWsMessage=data=>{},
                             onWsMessageSend=data=>{},
@@ -120,6 +123,7 @@ function createClient({
                                                                 await builder.localSDP(localSdp);
                                                                 return builder.send('rtc-sdp-reply',{sdp:builder.rtc.localDescription});
             }
+            wsMessageType[data.type]&&wsMessageType[data.type](data);
         })
     });
 
