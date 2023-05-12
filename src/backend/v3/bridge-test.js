@@ -2,6 +2,7 @@ import {FBU_CONF,INIT_TYPE_MAIN,INIT_TYPE_RENDER} from "./config/config-center";
 import {createClient} from "./core/main/p2p";
 import {render,main} from "./bridge";
 
+const ChannelMsgTypeTest={};          //rtc.channel自定义信息解析
 let client1,client2;
 
 function getClient(name){
@@ -10,6 +11,7 @@ function getClient(name){
 
 function initMain2Render(name){
     return {
+        channelMessageType:ChannelMsgTypeTest,
         onWsConnect:main('testWsClient','onWsConnect','test-onWsConnect',name),
         //onWsMessage:main('testWsClient','onWsMessage','test-onWsMessage',name),
         //onWsMessageSend:main('testWsClient','onWsMessageSend','test-onWsMessageSend',name),
@@ -70,6 +72,7 @@ function initTest(initType){
 
 export {
     initTest,
+    ChannelMsgTypeTest,
     initMain2Render,
     initRender2Main
 }

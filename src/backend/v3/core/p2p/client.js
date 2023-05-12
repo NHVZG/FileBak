@@ -1,4 +1,4 @@
-import {AFTER, log} from "../../utils/decorator/log";
+import {AFTER, log} from "../../decorator/log";
 import {RTCIceCandidate, RTCSessionDescription} from "wrtc";
 import {WebSocket} from "ws";
 import {__time} from "../../utils/util";

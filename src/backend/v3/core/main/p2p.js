@@ -35,7 +35,7 @@ function createServer({
                                                                         onWsMessage(data);
                                                                     }
                 }
-                wsMessageType[data.type]&&wsMessageType[data.type](data);
+                wsMessageType[data.type]&&wsMessageType[data.type].map(f=>f(data,builder));            //. 自定义信息类型处理
             }, ws);
             builder.on('ws-pong', (buffer) => ws.isAlive = true, ws);
         });
@@ -46,6 +46,7 @@ function createServer({
 
 //. 创建客户端
 function createClient({
+                            channelMessageType={},                                                                                                                              //. 通道自定义信息类型处理
                             wsMessageType={},                                                                                                                                       //. 自定义信息类型处理
                             onWsConnect=(clientID,json)=>{},
                             onWsMessage=data=>{},
@@ -75,7 +76,13 @@ function createClient({
         });
         builder.on('rtc-channel-close',onChannelClose);
         builder.on('rtc-channel-error',onChannelError);
-        builder.on('rtc-channel-message',event=>onChannelMessage(event.data,event,builder.rtcRemoteClientID));
+        builder.on('rtc-channel-message',event=>{
+            event.data.type
+            &&channelMessageType(event.data.type)
+            &&channelMessageType(event.data.type).map(f=>f(event.data,builder));
+            //默认调用
+            onChannelMessage(event.data,event,builder.rtcRemoteClientID)
+        });
     });
 
     builder.register(builder.ON_WS_CREATE,()=>{                                                                                                                               //. ws创建事件
@@ -114,7 +121,7 @@ function createClient({
                                                                 await builder.localSDP(localSdp);
                                                                 return builder.send('rtc-sdp-reply',{sdp:builder.rtc.localDescription});
             }
-            wsMessageType[data.type]&&wsMessageType[data.type](data);
+            wsMessageType[data.type]&&wsMessageType[data.type].map(f=>f(data,builder));                                                       //. 自定义信息类型处理
         })
     });
 

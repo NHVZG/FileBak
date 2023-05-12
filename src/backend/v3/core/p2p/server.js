@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import {AFTER, log} from "../../utils/decorator/log";
+import {AFTER, log} from "../../decorator/log";
 import https from "https";
 import http from "http";
 import {WebSocketServer} from "ws";

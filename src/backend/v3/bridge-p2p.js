@@ -4,6 +4,7 @@ import {createClient, createServer} from "./core/main/p2p";
 
 const WsMsgType={};                     //客户端自定义ws信息解析
 const WsServerMsgType={};          //服务端自定义ws信息解析
+const ChannelMsgType={};             //rtc.channel自定义信息解析
 let server;
 let client;
 
@@ -15,6 +16,7 @@ function initMain2Render(){
         onWsMessageSend:main('wsServer','onMessageSend')
     };
     let clientConf={
+        channelMessageType:ChannelMsgType,
         wsMessageType:WsMsgType,
         onWsConnect:main('wsClient','onWsConnect'),
         onWsMessage:main('wsClient','onWsMessage'),
@@ -85,4 +87,11 @@ function initP2P(initType){
     }
 }
 
-export {initP2P,server,client,WsMsgType,WsServerMsgType}
+export {
+    initP2P,
+    server,
+    client,
+    WsMsgType,
+    WsServerMsgType,
+    ChannelMsgType
+}
