@@ -67,7 +67,7 @@ class WsBuilder{
     onWsOpen(){}
 
     @log('ws ping')                                                                                                      //% 默认 - ws.ping事件
-    onWsPing(){console.log(this);}
+    onWsPing(){}
 
    onWsMessage(){}                                                                                                     //% 默认 - ws.message事件
 
