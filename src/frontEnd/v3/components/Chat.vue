@@ -13,8 +13,8 @@
           </el-row>
           <el-row :gutter="10">
             <el-col :span="7" style="text-align: left"><el-text>turn服务器:</el-text></el-col>
-            <el-col :span="1.5"><el-button @click="turnStartup" type="primary" :disabled="ws.server.state!=='CLOSED'">启动</el-button></el-col>
-            <el-col :span="1.5"><el-button @click="turnTerminate" type="primary" :disabled="ws.server.state!=='RUNNING'">停止</el-button></el-col>
+            <el-col :span="1.5"><el-button @click="turnStartup" type="primary" :disabled="turn.state!=='CLOSED'">启动</el-button></el-col>
+            <el-col :span="1.5"><el-button @click="turnTerminate" type="primary" :disabled="turn.state!=='RUNNING'">停止</el-button></el-col>
             <el-col :span="1.5"><el-text>状态：{{turn.state}}</el-text></el-col>
           </el-row>
         </el-card>
@@ -226,9 +226,9 @@ export default {
           remoteClientID:'',
           message:'',
           msgList:[],
-          channelState:'',
-          rtcState:'',
-          wsState:''
+          channelState:'',        //webrtc.通道连接状态
+          rtcState:'',                 //webrtc连接状态
+          wsState:''                  //ws登录状态
         }
       },
       turn:{
@@ -253,20 +253,37 @@ export default {
     });
     //window.testWsClient.onWsMessage((name,data)=>_this.rtc[name].msgList.psuh(data));
     //window.testWsClient.onWsMessageSend((name,data)=>_this.rtc[name].msgList.psuh(data));
-    window.testWsClient.onWsError((name,event)=>ElMessage(`ws ${name} error ${event}`));
-    window.testWsClient.onWsClose((name,event)=>ElMessage(`ws ${name} close ${event}`));
+    window.testWsClient.onWsError((name,event)=>{
+      _this.rtc[name].wsState='CLOSED';
+      ElMessage(`ws ${name} error ${event}`)
+    });
+    window.testWsClient.onWsClose((name,event)=>{
+      _this.rtc[name].wsState='CLOSED';
+      ElMessage(`ws ${name} close ${event}`)
+    });
 
     window.testWebrtc.onRtcConnect((name,remoteClientID,event)=>ElMessage(`rtc ${name} connect ${remoteClientID}`));
-    window.testWebrtc.onRtcError((name,event)=>ElMessage(`rtc ${name} error ${event}`));
-    window.testWebrtc.onRtcClose((name,event)=>ElMessage(`rtc ${name} close ${event}`));
+    window.testWebrtc.onRtcError((name,event)=>{
+      _this.rtc[name].rtcState='FAILED';
+      ElMessage(`rtc ${name} error ${event}`)
+    });
+    window.testWebrtc.onRtcClose((name,event)=>{
+      _this.rtc[name].rtcState='CLOSED';
+      ElMessage(`rtc ${name} close ${event}`)
+    });
 
     window.testWebrtc.onChannelOpen((name)=>ElMessage(`rtc  channel ${name} open`));
     window.testWebrtc.onChannelMessage((name,data)=>{
-      console.log(data);
       _this.rtc[name].msgList.push(data)
     });
-    window.testWebrtc.onChannelError((name,event)=>ElMessage(`rtc  channel ${name} error ${event}`));
-    window.testWebrtc.onChannelClose((name,event)=>ElMessage(`rtc  channel ${name} close ${event}`));
+    window.testWebrtc.onChannelError((name,event)=>{
+      _this.rtc[name].channelState='CLOSED';
+      ElMessage(`rtc  channel ${name} error ${event}`)
+    });
+    window.testWebrtc.onChannelClose((name,event)=>{
+      _this.rtc[name].channelState='CLOSED';
+      ElMessage(`rtc  channel ${name} close ${event}`)
+    });
     this.states(true);
     setInterval(this.states,5000);
   },
@@ -292,7 +309,6 @@ export default {
       this.rtc.client2.channelState=rtc2State.channelState;
       this.rtc.client2.wsState=rtc2State.wsState;
       this.rtc.client2.rtcState=rtc2State.rtcState;
-      console.log(rtc1State.rtcState);
       if(initInput) {
         this.rtc.client1.remoteClientID = rtc1State.remoteClientID;
         this.rtc.client2.remoteClientID=rtc2State.remoteClientID;

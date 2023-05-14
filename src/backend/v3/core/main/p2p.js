@@ -105,7 +105,7 @@ function createClient({
                                                                 onRtcConnect(data.from,data);break;
 
                 case 'rtc-sdp-request':           builder.rtcRemoteClientID=data.from;
-                                                                if(!builder.rtc){
+                                                                if(!builder.rtc||["closed" , "connected" , "connecting", "disconnected" , "failed"].includes(builder.rtc.connectionState)){ //' 有新请求 或 关闭状态则新建连接
                                                                     builder.call(builder.RTC_CREATE);
                                                                 }
                                                                 if (builder.rtc.signalingState !== "stable") {                                                                     //' 非stable的则回滚，退出，等待对方先发起协商

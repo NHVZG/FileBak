@@ -190,6 +190,7 @@ class WsServerBuilder{
     //, turn服务停止
     turnServerTerminate(){
         this.turnServer&&this.turnServer.stop();
+        this.turnServer=null;
     }
 
     //, 服务器状态
@@ -197,7 +198,7 @@ class WsServerBuilder{
         let info={
             ws:this.wsServer?['RUNNING','CLOSING','CLOSED'][this.wsServer._state]:'CLOSED',
             web:this.webServer&&this.webServer.listening?'RUNNING':'CLOSED',
-            turn:this.turnServer&&this.turnServer.network.sockets.length>0?'RUNNING':'CLOSED'
+            turn:this.turnServer?'RUNNING':'CLOSED'
         }
         if(type){
             let key={

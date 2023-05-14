@@ -177,7 +177,8 @@ class WsBuilder{
 
     //. 创建rtc channel
     channelCreate(){
-        if(!this.rtc||["closed" , /*"connected" ,*/ "connecting", "disconnected" , "failed" , "new"].includes(this.rtc.connectionState)){
+        //if(!this.rtc||["closed" , /*"connected" ,*/ "connecting", "disconnected" , "failed" , "new"].includes(this.rtc.connectionState)){
+        if(!this.rtc||["closed" , "connected" , "connecting", "disconnected" , "failed" , "new"].includes(this.rtc.connectionState)){    //已连接的也 重建新的连接
             this.rtcCreate();
         }
         this.channel=this.rtc.createDataChannel('sendDataChannel');         //"closed" | "closing" | "connecting" | "open"
