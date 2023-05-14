@@ -46,6 +46,7 @@ function createServer({
 
 //. 创建客户端
 function createClient({
+                            name='',
                             channelMessageType={},                                                                                                                              //. 通道自定义信息类型处理
                             wsMessageType={},                                                                                                                                       //. 自定义信息类型处理
                             onWsConnect=(clientID,json)=>{},
@@ -63,17 +64,14 @@ function createClient({
     let HEARTBEAT='heartbeat';
 
     let builder=new WsBuilder();
-
-    builder.register(HEARTBEAT,()=>builder.timeout(30000+1000,()=>builder.wsClose()));
+    builder.name=name;
+    builder.register(HEARTBEAT,()=>builder.timeout(3000000+1000,()=>builder.wsClose()));
 
     builder.register(builder.ON_WS_MESSAGE_SEND,onWsMessageSend);
 
     builder.register(builder.CHANNEL_CREATE,()=>{                                                                                                                          //. webrtc通道创建事件
         builder.channel.binaryType = 'arraybuffer';
-        builder.on('rtc-channel-open',(event)=>{
-            console.log('channel open');
-            onChannelOpen(event);
-        });
+        builder.on('rtc-channel-open',(event)=>onChannelOpen(event));
         builder.on('rtc-channel-close',onChannelClose);
         builder.on('rtc-channel-error',onChannelError);
         builder.on('rtc-channel-message',event=>{
@@ -133,13 +131,14 @@ function createClient({
         builder.on('rtc-ice-candidate', event => {
             builder.send('rtc-ice',{candidate:event.candidate})
         });
-        builder.on('rtc-ice-connection-state-change', event => {
+        builder.on('rtc-ice-connection-state-change', (event,...arg) => {
+            if(!builder.rtc)return;
             switch (builder.rtc.iceConnectionState){
                 case 'closed':
                 case 'disconnected':     builder.rtcClose();
-                                                       onRtcClose(event);break;
+                                                       onRtcClose(builder.rtc?builder.rtc.iceConnectionState:'closed');break;
                 case 'failed':                  builder.rtcClose();
-                                                       onRtcError(event);break;
+                                                       onRtcError(builder.rtc?builder.rtc.iceConnectionState:'closed');break;
             }
         });
         builder.on('rtc-ice-gathering-state-change');
@@ -147,7 +146,7 @@ function createClient({
         builder.on('rtc-signaling-state', event => {
             switch (builder.rtc.signalingState){
                 case 'closed':                  builder.rtcClose();
-                                                        onRtcClose(event);break;
+                                                        onRtcClose(builder.rtc.signalingState);break;
             }
         });
         builder.on('rtc-negotiation-needed', async () => {

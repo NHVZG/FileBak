@@ -42,7 +42,11 @@ function render(group,handleMap){
 function main(group,name,channel,...p){
     channel=channel || (group + '_' + name);
     if(initTYPE===INIT_TYPE_RENDER){
-        let exposes = {[name]: callback => ipcRenderer.on(channel, (sender,...arg)=>callback(...arg))};
+        let exposes = {
+            [name]: callback => {
+                ipcRenderer.removeAllListeners(channel);                                                                            // 移除所有前端监听 避免多次执行监听事件
+                ipcRenderer.on(channel, (sender,...arg)=>callback(...arg));
+            }};
         exposeMap[group] = exposeMap[group] ? {...exposeMap[group], ...exposes} : exposes;
     }else if(initTYPE===INIT_TYPE_MAIN){
         return (...arg)=>{

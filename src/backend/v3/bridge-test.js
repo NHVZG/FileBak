@@ -11,6 +11,7 @@ function getClient(name){
 
 function initMain2Render(name){
     return {
+        name:name,
         channelMessageType:ChannelMsgTypeTest,
         onWsConnect:main('testWsClient','onWsConnect','test-onWsConnect',name),
         //onWsMessage:main('testWsClient','onWsMessage','test-onWsMessage',name),
@@ -33,7 +34,8 @@ function initRender2Main(){
     render('testWsClient',{
         connect:                         (name,conf)=>getClient(name).connect(getClient(name).TYPE_WS,{ws:conf}),
         send:                               (name,{message})=>getClient(name).send('ws-message', {message}),
-        terminate:                      name=>getClient(name).wsClose()
+        terminate:                      name=>getClient(name).wsClose(),
+        state:                              name=>getClient(name).state()
     });
 
     render('testWebrtc',{
@@ -51,7 +53,8 @@ function initRender2Main(){
                                                     }
                                                 }),
         channelSend:                (name,data)=>getClient(name).send('channel',data),
-        channelTerminate:       name=>getClient(name).channelClose()
+        channelTerminate:       name=>getClient(name).channelClose(),
+        state:                              name=>getClient(name).state()
     });
 }
 

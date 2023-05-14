@@ -45,13 +45,15 @@ function initRender2Main({server,client}={}){
     render('wsServer',{
         startup:                          data=>server.build('ws',{...FBU_CONF.ws.server}),
         terminate:                      data=>server.terminate(server.TYPE_WS),
-        send:                              ({message})=>server.send('ws-message-data',{message})
+        send:                              ({message})=>server.send('ws-message-data',{message}),
+        state:                              ()=>server.state()
     });
     //websocket客户端
     render('wsClient',{
         connect:                         conf=>client.connect(client.TYPE_WS,{ws:conf}),
         send:                              ({message})=>client.send('ws-message-data', {message}),
-        terminate:                      data=>client.wsClose()
+        terminate:                      data=>client.wsClose(),
+        state:                              ()=>client.state()
     });
     //webrtc p2p
     render('webrtc',{
@@ -69,7 +71,8 @@ function initRender2Main({server,client}={}){
                                                 }
                                             }),
         channelSend:             data=>client.send('channel',data),
-        channelTerminate:     data=>client.channelClose()
+        channelTerminate:    data=>client.channelClose(),
+        state:                           ()=>client.state()
     });
 }
 

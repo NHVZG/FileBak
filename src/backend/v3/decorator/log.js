@@ -1,11 +1,11 @@
 
-function log(a,aspect=BEFORE){
+function log(a,{aspect=BEFORE,lose=null}={}){
     let contentGenerator=(typeof a==='function')?a:()=>a;
     return (target,name,descriptor)=> {
         let originalValue = descriptor.value;
         descriptor.value = function (...args) {
             if(aspect===BEFORE){
-                let txt=compileStr(target,originalValue,contentGenerator(...args),args);
+                let txt=compileStr(this,originalValue,contentGenerator(...args),lose,args);
                 if(txt)console.log(txt);
             }
 
@@ -19,7 +19,7 @@ function log(a,aspect=BEFORE){
             }
 
             if(aspect===AFTER){
-                let txt=compileStr(target,originalValue,contentGenerator(result,...args),args,result);
+                let txt=compileStr(target,originalValue,contentGenerator(result,...args),lose,args,result);
                 if(txt)console.log(txt);
             }
             return result;
@@ -31,7 +31,7 @@ function log(a,aspect=BEFORE){
 
 
 //% 仅支持取值，不支持其他操作
-function compileStr(target,func,str,argsArr,res){
+function compileStr(target,func,str,lose,argsArr,res){
     let argNames=getParamNames(func);
     let data=argNames.reduce((obj,item,idx)=>({[item]:argsArr[idx],...obj}),{});
     data.__res=res;//结果
@@ -47,6 +47,10 @@ function compileStr(target,func,str,argsArr,res){
         let idx=0,obj=null;
         while(propArray.length>idx){
             obj=(obj?obj:data)[propArray[idx]];
+            if(obj===undefined||obj==null){//缺省值
+                obj=lose;
+                break;
+            }
             idx++;
         }
         if(obj) {

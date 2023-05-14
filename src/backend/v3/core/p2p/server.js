@@ -101,7 +101,7 @@ class WsServerBuilder{
         switch (res.code){
             case 1003:return 'Connect from ${__res.data.ip}';
             case 1000:return 'Connection from ${__res.data.ip} has been rejected';
-        }},AFTER)
+        }}, {aspect:AFTER})
     onWsConnection(ws,im){
         //过滤客户端
         let ip=getAddressByIncomeMessage(im);
@@ -192,6 +192,24 @@ class WsServerBuilder{
         this.turnServer&&this.turnServer.stop();
     }
 
+    //, 服务器状态
+    state(type){
+        let info={
+            ws:this.wsServer?['RUNNING','CLOSING','CLOSED'][this.wsServer._state]:'CLOSED',
+            web:this.webServer&&this.webServer.listening?'RUNNING':'CLOSED',
+            turn:this.turnServer&&this.turnServer.network.sockets.length>0?'RUNNING':'CLOSED'
+        }
+        if(type){
+            let key={
+                [this.TYPE_TURN]:'turn',
+                [this.TYPE_WS]:'ws',
+                [this.TYPE_WEB]:'turn'
+            }[type];
+            return {[key]:info[key]};
+        }
+        return info;
+    }
+
 
     //, 发送ping
     @log('${ws.clientID}: ping')
@@ -229,6 +247,9 @@ class WsServerBuilder{
     //from空则为服务器主动发出
     send(type,data,to,from='server'){
         let content={type,data,to,from,time:__time()};
+        if(type==='ws-message-data') {
+            this.call(this.ON_WS_MESSAGE_SEND, content);
+        }
         if(to) return this.unicast(content);
         else return this.broadcast(content);
     }

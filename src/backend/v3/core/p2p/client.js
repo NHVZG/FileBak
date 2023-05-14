@@ -23,6 +23,7 @@ class WsBuilder{
         this.clientID=null;
         this.rtcRemoteClientID=null;
         this.timeoutTimer=null;
+        this.name='';
 
         this.funcMap={};
     }
@@ -71,44 +72,40 @@ class WsBuilder{
 
    onWsMessage(){}                                                                                                     //% 默认 - ws.message事件
 
-    @log('rtc outgoing ice：${event.candidate.candidate}')                                     //% 默认 - rtc.onicecandidate事件
+    @log('${_this.name} rtc outgoing ice：${event.candidate.candidate}')                                     //% 默认 - rtc.onicecandidate事件
     onIceCandidate(event){}
 
-    @log('rtc iceConnectionStateChange：${_this.rtc.connectionState}')                //% 默认 - rtc.iceconnectionstatechange事件
+    @log('${_this.name} rtc iceConnectionStateChange：${_this.rtc.iceConnectionState}',{lose:'closed'}) //% 默认 - rtc.iceconnectionstatechange事件
     onIceConnectionStateChange(){}
 
-    @log('rtc iceGatheringStateChange: ${_this.rtc.iceGatheringState}')                  //% 默认 - rtc.icegatheringstatechange事件
+    @log('${_this.name} rtc iceGatheringStateChange: ${_this.rtc.iceGatheringState}')                  //% 默认 - rtc.icegatheringstatechange事件
     onIceGatheringStateChange(){}
 
-    @log('rtc connectionStateChange: ${_this.rtc.connectionState}')                       //% 默认 - rtc.connectionstatechange事件
+    @log('${_this.name} rtc connectionStateChange: ${_this.rtc.connectionState}',{lose:'closed'}) //% 默认 - rtc.connectionstatechange事件
     onConnectionStateChange(){}
 
-    @log('rtc signalingStateChange: ${_this.rtc.signalingState}')                              //% 默认 - rtc.signalingStateChange事件
+    @log('${_this.name} rtc signalingStateChange: ${_this.rtc.signalingState}')                              //% 默认 - rtc.signalingStateChange事件
     onSignalingStateChange(){}
 
-    @log('rtc negotiation started')                                                                              //% 默认 - rtc.onNegotiationNeeded事件
+    @log('${_this.name} rtc negotiation started')                                                                              //% 默认 - rtc.onNegotiationNeeded事件
     onNegotiationNeeded(){}
 
-    @log('rtc tracking')                                                                                                 //% 默认 - rtc.onTrack事件
+    @log('${_this.name} rtc tracking')                                                                                                 //% 默认 - rtc.onTrack事件
     onTrack(){}
 
-    @log('rtc dataChannel...')                                                                                       //% 默认 - rtc.onDataChannel事件
+    @log('${_this.name} rtc dataChannel...')                                                                                       //% 默认 - rtc.onDataChannel事件
     onDataChannel(){}
 
-    @log('channel Open')                                                                                            //% 默认 - channel.onOpen事件
+    @log('${_this.name} channel Open')                                                                                            //% 默认 - channel.onOpen事件
     onChannelOpen(){}
 
-    @log('channel Close')                                                                                            //% 默认 - channel.onClose事件
-    onChannelClose(){
-        this.rtcClose();
-    }
+    @log('${_this.name} channel Close')                                                                                            //% 默认 - channel.onClose事件
+    onChannelClose(){}
 
-    @log('channel Error')                                                                                             //% 默认 - channel.onError事件
-    onChannelError(){
-        this.rtcClose();
-    }
+    @log('${_this.name} channel Error')                                                                                             //% 默认 - channel.onError事件
+    onChannelError(){}
 
-    @log('channel Message: ${event.data}')                                                               //% 默认 - channel.onMessage事件
+    @log('${_this.name} channel Message: ${event.data}')                                                               //% 默认 - channel.onMessage事件
     onChannelMessage(event){}
 
     //, rtc添加候选
@@ -143,7 +140,7 @@ class WsBuilder{
     }
 
     //, rtc关闭连接
-    @log(res=>res?'rtc closing the peer connection':'',AFTER)
+    @log(res=>res?'rtc closing the peer connection':'', {aspect:AFTER})
     rtcClose(){
         if (this.rtc) {
             this.rtc.ontrack = null;
@@ -183,7 +180,7 @@ class WsBuilder{
         if(!this.rtc||["closed" , /*"connected" ,*/ "connecting", "disconnected" , "failed" , "new"].includes(this.rtc.connectionState)){
             this.rtcCreate();
         }
-        this.channel=this.rtc.createDataChannel('sendDataChannel');
+        this.channel=this.rtc.createDataChannel('sendDataChannel');         //"closed" | "closing" | "connecting" | "open"
         this.call(this.CHANNEL_CREATE);
     }
 
@@ -207,6 +204,17 @@ class WsBuilder{
     timeout(ms,callback){
         clearTimeout(this.timeoutTimer);
         this.timeoutTimer = setTimeout(callback,ms);
+    }
+
+    //. info
+    state(){
+        return {
+            clientID:this.clientID,
+            remoteClientID:this.rtcRemoteClientID,
+            wsState:this.ws?['CONNECTING','OPEN','CLOSING','CLOSED'][this.ws._readyState]:'CLOSED',
+            rtcState:this.rtc?this.rtc.connectionState.toUpperCase():'CLOSED',
+            channelState:this.channel?this.channel.readyState.toUpperCase():'CLOSED'
+        }
     }
 
     //. 通用连接方法
