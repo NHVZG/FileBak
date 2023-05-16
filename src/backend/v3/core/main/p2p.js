@@ -75,11 +75,13 @@ function createClient({
         builder.on('rtc-channel-close',onChannelClose);
         builder.on('rtc-channel-error',onChannelError);
         builder.on('rtc-channel-message',event=>{
-            event.data.type
-            &&channelMessageType(event.data.type)
-            &&channelMessageType(event.data.type).map(f=>f(event.data,builder));
+            let data=event.data instanceof Array?event.data:JSON.parse(event.data);
+            if(data.type&&channelMessageType[data.type]){
+                channelMessageType[data.type].map(f=>f(data,builder));
+                return;
+            }
             //默认调用
-            onChannelMessage(event.data,event,builder.rtcRemoteClientID)
+            onChannelMessage(data,event,builder.rtcRemoteClientID)
         });
     });
 

@@ -63,7 +63,7 @@
            <el-row style="margin: 58px 0" :gutter="1">&nbsp;</el-row>
             <el-row :gutter="10">
               <el-col :span="18"><el-input v-model="ws.server.message" placeholder="信息"/></el-col>
-              <el-col :span="2"><el-button @click="wsServerSend" :disabled="ws.client.state!=='OPEN'" type="primary">发送</el-button></el-col>
+              <el-col :span="2"><el-button @click="wsServerSend" :disabled="ws.server.state!=='RUNNING'" type="primary">发送</el-button></el-col>
             </el-row>
             <el-row>
               <div class="msg-box">
@@ -274,7 +274,7 @@ export default {
 
     window.testWebrtc.onChannelOpen((name)=>ElMessage(`rtc  channel ${name} open`));
     window.testWebrtc.onChannelMessage((name,data)=>{
-      _this.rtc[name].msgList.push(data)
+      _this.rtc[name].msgList.push({message:data.data.message,remoteClientID:_this.rtc[name].remoteClientID})
     });
     window.testWebrtc.onChannelError((name,event)=>{
       _this.rtc[name].channelState='CLOSED';
@@ -288,7 +288,7 @@ export default {
     setInterval(this.states,5000);
   },
   methods:{
-    async states(initInput=false){
+    async states(initInput=true){
       let serverState=await window.wsServer.state();
       this.turn.state=serverState.turn;
       this.ws.server.state=serverState.ws;

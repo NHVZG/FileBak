@@ -283,7 +283,8 @@ class WsBuilder{
             case 'rtc-ice':
             case 'rtc-sdp-request':
             case 'ws-message-data':   break;
-            case 'channel':                   return this.channel.send(data);
+            case 'channel':                   let d=data instanceof Array||data instanceof String?data:JSON.stringify(data);
+                                                        return this.channel.send(d);
         }
         let json= {
             type,

@@ -10,12 +10,14 @@ const MESSAGE_RTC_CHANNEL_TEST=3;
 function channel(type,clientType){
     return (target,name,descriptor)=> {
         switch (clientType){
-            case MESSAGE_RTC_CHANNEL:                    ChannelMsgType[type]=WsMsgType[type]||[];
-                                                                                    ChannelMsgType[type].push(descriptor.value);
-                                                                                    break;
-            case MESSAGE_RTC_CHANNEL_TEST:           ChannelMsgTypeTest[type]=ChannelMsgTypeTest[type]||[];
-                                                                                    ChannelMsgTypeTest[type].push(descriptor.value);
-                                                                                     break;
+            case MESSAGE_RTC_CHANNEL_TEST:
+                                                                                      ChannelMsgType[type]=WsMsgType[type]||[];
+                                                                                      ChannelMsgType[type].push(descriptor.value);
+                                                                                      break;
+            case MESSAGE_RTC_CHANNEL:
+                                                                                      ChannelMsgTypeTest[type]=ChannelMsgTypeTest[type]||[];
+                                                                                      ChannelMsgTypeTest[type].push(descriptor.value);
+                                                                                       break;
         }
     }
 }
@@ -40,5 +42,7 @@ export {
     channel,
     message,
     MESSAGE_WS,
-    MESSAGE_WS_SERVER
+    MESSAGE_WS_SERVER,
+    MESSAGE_RTC_CHANNEL,
+    MESSAGE_RTC_CHANNEL_TEST
 }

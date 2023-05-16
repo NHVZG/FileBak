@@ -26,9 +26,9 @@
     <el-row>
       <div class="msg-box">
         <div class="msg" style="display: flex" v-for="item in msgList">
-          <div class="msg-label">{{remote}}</div>
+          <div class="msg-label">{{item.remoteClientID}}</div>
           <el-text>:</el-text>
-          <div style="word-break: break-word">{{ item }}</div>
+          <div style="word-break: break-word">{{ item.message }}</div>
         </div>
       </div>
     </el-row>
@@ -90,10 +90,10 @@ export default {
   computed:{
     remote:{
       get(){
-        return this.remoteClientId||this.remoteId;
+        return this.remoteId||this.remoteClientId;
       },
       set(nVal,oVal){
-        this.remoteClientId=nVal;
+        this.remoteId=nVal;
       }
     },
     login(){
@@ -128,7 +128,7 @@ export default {
       window.testWebrtc.channelConnect(this.name,{remoteClientID:this.remote});
     },
     testClientChannelSend(){
-      window.testWebrtc.channelSend(this.name,this.message);
+      window.testWebrtc.channelSend(this.name, {type:'message',data:{message:this.message}});
     },
     testClientWsDisConnect(){
       window.testWsClient.terminate(this.name);
