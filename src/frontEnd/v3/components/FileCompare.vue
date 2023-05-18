@@ -1,9 +1,7 @@
 <template>
-
   <el-row :gutter="6">
     <el-col :span="11">
-      <el-text>{{left.choosePath}}</el-text>
-      <el-card shadow="always" class="tree-card">
+      <el-card shadow="always" class="tree-card left-scroll" ref="leftCard">
 <!--        <el-tree :props="treePropName" :data="tree" :load="load" lazy>
           <template #default="{ node, data }">
             <div class="custom-tree-node">
@@ -36,9 +34,9 @@
             </div>
           </template>
         </el-tree>-->
-        <el-tree :props="treePropName" :data="leftTree" default-expand-all>
+        <el-tree :props="treePropName" :data="leftTree" default-expand-all class="right-scroll">
           <template #default="{ node, data }">
-            <div class="custom-tree-node">
+            <div class="custom-tree-node" :ref="registerRef(node,data)">
               <span>
 
                 <el-text v-if="data.display">
@@ -70,16 +68,16 @@
         </el-tree>
 
       </el-card>
+      <el-text>{{left.choosePath}}</el-text>
     </el-col>
   <el-col :span="2">
 
     <div style="height: 400px;">
-        <canvas style="height: 100%;width: 100%"></canvas>
+        <canvas style="height: 100%;width: 100%" ref="canvas"></canvas>
     </div>
   </el-col>
 
     <el-col :span="11">
-        <el-text>{{right.choosePath}}</el-text>
         <el-card shadow="always" class="tree-card">
 <!--          <el-tree :props="treePropName" :data="tree" :load="load" lazy>
             <template #default="{ node, data }">
@@ -146,15 +144,19 @@
           </el-tree>
 
         </el-card>
+      <el-text>{{right.choosePath}}</el-text>
       </el-col>
   </el-row>
+<el-button @click="colors">colors</el-button>
+<el-button @click="leftTreeEl">leftTree</el-button>
+<el-button @click="draw">draw</el-button>
 
-
-
+  <canvas style="height: 100%;width: 100%" ref="canvas1"></canvas>
 </template>
 
 <script>
 import {Link,Files, Folder, FolderOpened, MessageBox} from "@element-plus/icons-vue";
+import {detailedDiff} from "deep-object-diff";
 
 const DRIVER=0;                 //' 驱动器
 const DIRECTORY=1;          //' 文件夹
@@ -193,7 +195,9 @@ export default {
               {"type":1,"name":"Game","label":"Game","path":"D://Game","display":true,"leaf":false},{"type":1,"name":"Home","label":"Home","path":"D://Home","display":true,"leaf":false},{"type":1,"name":"Note","label":"Note","path":"D://Note","display":true,"leaf":false},{"type":1,"name":"Software","label":"Software","path":"D://Software","display":true,"leaf":false},
               {"type":1,"name":"Test","label":"Test","path":"D://Test","display":true,"leaf":false,children:[{"type":1,"name":".config","label":".config","path":"D:/Test/.config","display":true,"leaf":false},{"type":1,"name":"a","label":"a","path":"D:/Test/a","display":true,"leaf":false},{"type":1,"name":"Refer","label":"Refer","path":"D:/Test/Refer","display":true,"leaf":false}]},
               {"type":1,"name":"备份","label":"备份","path":"D://备份","display":true,"leaf":false},{"type":2,"name":"httpsbm.ruankao.org.cnsignup.txt","label":"httpsbm.ruankao.org.cnsignup.txt","path":"D://httpsbm.ruankao.org.cnsignup.txt","display":true,"leaf":true},{"type":2,"name":"Screenshot_20230201214717.jpg","label":"Screenshot_20230201214717.jpg","path":"D://Screenshot_20230201214717.jpg","display":true,"leaf":true},{"type":2,"name":"Screenshot_20230201214726.jpg","label":"Screenshot_20230201214726.jpg","path":"D://Screenshot_20230201214726.jpg","display":true,"leaf":true},{"type":2,"name":"微信图片_20220903142927.jpg","label":"微信图片_20220903142927.jpg","path":"D://微信图片_20220903142927.jpg","display":true,"leaf":true},
-              {"type":2,"name":"报名照片.jpg","label":"报名照片.jpg","path":"D://报名照片.jpg","display":true,"leaf":true}]
+              {"type":2,"name":"报名照片.jpg","label":"报名照片.jpg","path":"D://报名照片.jpg","display":true,"leaf":true},
+              {"type":2,"name":"1.jpg","label":"1.jpg","path":"D://k.jpg","display":true,"leaf":true}
+            ]
           }],
       remoteTree:[],
       remoteResolve:null,
@@ -220,9 +224,10 @@ export default {
     //console.log('mounted');
     //this.read();
     let _this=this;
-    window.files.onFileStructReply(function(struct){
+    /*window.files.onFileStructReply(function(struct){
       _this.remoteResolve(_this.resolveNode(struct));
-    });
+    });*/
+    this.compareTree();
   },
   methods:{
     async load(node,resolve){
@@ -284,7 +289,49 @@ export default {
       if([FILE,SYMBOL].includes(data.type))return;
       node.expand();
       //node.expanded=true;
+    },
+
+    registerRef(node, data) {
+       data.id = node.id;
+      return `node_${node.id}`;
+    },
+
+    compareTree() {
+      console.log(detailedDiff(this.leftTree,this.rightTree));
+    },
+
+    colors(){
+      let row=this.$refs['node_'+this.leftTree[0].id].parentElement.parentElement;
+      console.log(row);
+      row.style.backgroundColor='red';//inherit
+    },
+    leftTreeEl(){
+      console.log(this.$refs.leftCard.$el.scrollHeight);
+      console.log(this.$refs.leftCard.$el.clientHeight);
+    },
+    draw(){
+      let canvas=this.$refs.canvas;
+      let parent=canvas.parentElement;
+      canvas.width=parent.clientWidth;
+      canvas.height=parent.clientHeight;
+      let ctx=canvas.getContext('2d');
+      ctx.lineWidth=1;
+      ctx.strokeStyle='#a5f77f63';
+      ctx.fillStyle='#a5f77f63';
+      ctx.beginPath();
+      let begin={x:0,y:0};
+      let end={x:parent.clientWidth,y:50};
+      let radius=40;
+      ctx.moveTo(begin.x, begin.y);
+      ctx.bezierCurveTo(begin.x+radius,begin.y,end.x-radius,end.y,end.x,end.y);
+      ctx.lineTo(0,end.y);
+      ctx.closePath();
+      ctx.stroke();
+      ctx.fill();
+      this.$refs[`node_${this.leftTree[0].id}`].parentElement.style.backgroundColor='#a5f77f63';
+      this.$refs[`node_${this.leftTree[1].id}`].parentElement.style.backgroundColor='#a5f77f63';
     }
+
 
   }
 }
@@ -308,14 +355,19 @@ export default {
 
 .node-text{
   display: inline-flex;
-  width:200px;
+  max-width:160px;
 }
 .node-text>span{
   display:inline-block;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
+.left-scroll{
+  direction: rtl;
+}
+.right-scroll{
+  direction: ltr;
+}
 </style>
 
 <!--全局-->
