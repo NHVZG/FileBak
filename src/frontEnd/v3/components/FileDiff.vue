@@ -334,7 +334,7 @@ export default {
         let common=this.diffs.common[node.data.path];
         let e=$(this.$refs.rightTree.$el).find(`[data-node-id=${common.r_id}]`)[0];
 
-        this.$refs.rightTreeBox.scrollTo({top: e.offsetTop - change.firstCommon.left.y});//behavior: 'smooth' 会导致一直左右滚动
+        this.$refs.rightTreeBox.scrollTo({top: e.offsetTop - change.firstCommon.left.y-5});//behavior: 'smooth' 会导致一直左右滚动
         clearTimeout(this.left.scrollTimer);
         this.left.scrollTimer = setTimeout(() => this.left.scrolling = false, 10);
       }
@@ -350,7 +350,7 @@ export default {
         let node=this.$refs.rightTree.getNode(change.firstCommon.right.id);
         let common=this.diffs.common[node.data.path];
         let e=$(this.$refs.leftTree.$el).find(`[data-node-id=${common.l_id}]`)[0];
-        this.$refs.leftTreeBox.scrollTo({top: e.offsetTop - change.firstCommon.right.y});
+        this.$refs.leftTreeBox.scrollTo({top: e.offsetTop - change.firstCommon.right.y-5});
         clearTimeout(this.right.scrollTimer);
         this.right.scrollTimer = setTimeout(() => this.right.scrolling = false, 10);
       }
