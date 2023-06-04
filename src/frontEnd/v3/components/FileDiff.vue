@@ -361,12 +361,15 @@ export default {
       let rightNodes=this.findBoxVisibleNode(this.$refs.rightTreeBox);   //{id,e,y,level}
       let change= {
         add: {                                                                                                        //' 左新增
-//       __set,                                                                                                      //change.add渲染顺序
+          __set:new Set(),                                                                                     //change.add渲染顺序
 //        r_pid: {                                                                                                  //r_pid 左新增节点的父节点对应的右节点id，e为dom，y为起始y坐标，levelChange是否树层次变化，用于区分连续多个不同层次的新增节点
 //             link,
 //             left:[{node:[{e,l_id}],y,levelChange}],                                             //r_pid对应左列表多组新增节点
 //             right:{y,e}                                                                                        //左新增父节点对应的右节点
 //        }
+        },
+        addLink:{
+
         },
         leftEdit:{                                                                                                  //' 左编辑节点（临时）
 //          r_id:{l_id,e,y,levelChange,next,delay}                                                //r_id 左编辑节点对应右编辑节点id，l_id为左节点id,e为dom，y左编辑节点起始y坐标，levelChange是否层级变化，next下一个r_id，delay如果左右编辑节点同时可视，需要渲染成同一背景色，因此左边不着色，右边循环时着色
@@ -392,7 +395,7 @@ export default {
 //         }
         ]
       };
-      const {add,leftEdit,common,rightEdit,removed,firstCommon}=change;
+      const {add,leftEdit,common,rightEdit,removed,firstCommon,addLink}=change;
 
       let type;           //上一个列表项类型
       let level;          //上一个列表项层级
@@ -405,6 +408,13 @@ export default {
           let {r_pid}=diffItem;
           let bundle=add[r_pid];
           if(!bundle){
+            let set=this.getParents('right',r_pid);
+            for(let p of set){
+              if(!addLink[p]){
+                addLink[p]={to:new Set()};
+              }
+              addLink[p].to.add(r_pid);
+            }
             bundle=add[r_pid]={left: [], right: {}};
           }
           if(type!=='add'){
@@ -415,9 +425,6 @@ export default {
             level=left.level;
           }else{
             bundle.left[bundle.left.length-1].node.push({e:left.e,l_id:left.id});
-          }
-          if(!add.__set){
-            add.__set=new Set();
           }
           add.__set.add(r_pid);
           type='add';
@@ -451,12 +458,34 @@ export default {
       level=null;
       for(let right of rightNodes){
         let diffItem;
+        let diffParent;
+        if((diffParent=change.addLink[right.id])){
+          for(let p of diffParent.to){
+            let item=change.add[p];
+            if(!item.level||item.level<right.level){
+              item.right.y=right.y;
+              item.right.e=right.e;
+              item.right.level=right.level;
+            }
+          }
+        }
         if((diffItem=change.add[right.id])){                                                      //, 左新增
             diffItem.right.y=right.y;
             diffItem.right.e=right.e;
+            diffItem.right.level=right.level;
         }
         if((diffItem=this.diffs.removed[right.id])){                                            //,右新增
-          let leftNode=change.common[diffItem.l_pid]||{e:null,y:null};
+          //let leftNode=change.common[diffItem.l_pid]||{e:null,y:null};
+          let leftNode=change.common[diffItem.l_pid];
+          if(!leftNode){
+            let set=this.getParents('left',diffItem.l_pid);
+            for(let p of set){
+              if((leftNode=change.common[p]))break;
+            }
+            if(!leftNode)leftNode={e:null,y:null};
+          }
+
+
           if(type!=='removed'){
             removed.push({left:{e:leftNode.e,y:leftNode.y,l_pid:leftNode.l_id},right:{node:[{e:right.e,r_id:right.id}],y:right.y},levelChange:false});
             level=right.level;
