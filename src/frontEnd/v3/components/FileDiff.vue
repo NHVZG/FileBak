@@ -63,18 +63,114 @@
     </el-col>
 
   </el-row>
+  <el-row>
   <el-button @click="colors">colors</el-button>
   <el-button @click="leftTreeEl">leftTree</el-button>
   <el-button @click="draw">draw</el-button>
   <el-button @click="getRef">getRef</el-button>
+  </el-row>
+  <el-row>
+    <el-col :span="24">
+    <el-collapse accordion v-model="view.mergeConf.collapse">
+      <el-collapse-item title="全局同步模式" name="5">
+        <div>
+          <el-select v-model="treeMergeConf.coverMode">
+              <el-option v-for="item in view.mergeConf.coverModeOptions" :key="item.value" :label="item.label" :value="item.value">
+                <el-popover placement="right-end" :width="200" trigger="hover" :content="item.desc" effect="dark" hide-after="100">
+                  <template #reference><div>{{item.label}}</div></template>
+                </el-popover>
+              </el-option>
+          </el-select>
+        </div>
+      </el-collapse-item>
+      <el-collapse-item name="1">
+        <template #title>路径匹配</template>
+        <div>
+          <div class="merge-config-panel"><el-icon @click="addMergeConf(1)"><Plus /></el-icon></div>
+          <div v-for="(item,idx) in treeMergeConf.match.exact" class="merge-config-rule-item">
+            <el-row :gutter="2">
+            <el-col :span="18">
+              <el-input v-model="item.value"/>
+            </el-col>
+            <el-col :span="6">
+              <el-select v-model="item.type">
+                <el-option v-for="item in view.mergeConf.coverModeOptions" :key="item.value" :label="item.label" :value="item.value"/>
+              </el-select>
+              <el-text>&nbsp;<el-icon @click="deleteMergeConf(1,idx,item)" style="color: red;cursor: pointer;"><Remove /></el-icon></el-text>
+            </el-col>
+            </el-row>
+          </div>
+        </div>
+      </el-collapse-item>
+      <el-collapse-item title="正则匹配" name="2">
+        <div>
+          <div class="merge-config-panel"><el-icon @click="addMergeConf(2)"><Plus /></el-icon></div>
+          <div v-for="(item,idx) in treeMergeConf.match.regex" class="merge-config-rule-item">
+            <el-row :gutter="2">
+              <el-col :span="18">
+                <el-input v-model="item.value"/>
+              </el-col>
+              <el-col :span="6">
+                <el-select v-model="item.type">
+                  <el-option v-for="item in view.mergeConf.coverModeOptions" :key="item.value" :label="item.label" :value="item.value"/>
+                </el-select>
+                <el-text>&nbsp;<el-icon @click="deleteMergeConf(2,idx,item)" style="color: red;cursor: pointer;"><Remove /></el-icon></el-text>
+              </el-col>
+            </el-row>
+          </div>
+        </div>
+      </el-collapse-item>
+      <el-collapse-item title="忽略路径" name="3">
+        <div>
+          <div class="merge-config-panel"><el-icon @click="addMergeConf(3)"><Plus /></el-icon></div>
+          <div v-for="(item,idx) in treeMergeConf.except.exact" class="merge-config-rule-item">
+            <el-row :gutter="2">
+              <el-col :span="18">
+                <el-input v-model="item.value"/>
+              </el-col>
+              <el-col :span="6">
+                <el-select v-model="item.type">
+                  <el-option v-for="item in view.mergeConf.coverModeOptions" :key="item.value" :label="item.label" :value="item.value"/>
+                </el-select>
+                <el-text>&nbsp;<el-icon @click="deleteMergeConf(3,idx,item)" style="color: red;cursor: pointer;"><Remove /></el-icon></el-text>
+              </el-col>
+            </el-row>
+          </div>
+        </div>
+      </el-collapse-item>
+      <el-collapse-item title="忽略正则" name="4">
+        <div>
+          <div class="merge-config-panel"><el-icon @click="addMergeConf(4)"><Plus /></el-icon></div>
+          <div v-for="(item,idx) in treeMergeConf.except.regex" class="merge-config-rule-item">
+            <el-row :gutter="2">
+              <el-col :span="18">
+                <el-input v-model="item.value"/>
+              </el-col>
+              <el-col :span="6">
+                <el-select v-model="item.type">
+                  <el-option v-for="item in view.mergeConf.coverModeOptions" :key="item.value" :label="item.label" :value="item.value"/>
+                </el-select>
+                <el-text>&nbsp;<el-icon @click="deleteMergeConf(4,idx,item)" style="color: red;cursor: pointer"><Remove /></el-icon></el-text>
+              </el-col>
+            </el-row>
+          </div>
+        </div>
+      </el-collapse-item>
+
+
+    </el-collapse>
+    </el-col>
+
+  </el-row>
 
 </template>
 
 <script>
-import {Link,Files, Folder, FolderOpened, MessageBox} from "@element-plus/icons-vue";
+import {Link, Files, Folder, FolderOpened, MessageBox, Plus, Remove} from "@element-plus/icons-vue";
 import {detailedDiff} from "deep-object-diff";
 import $ from "jquery";
 import {list2map,recursiveTree} from "@/frontEnd/v3/components/common/util";
+import {ElMessage, ElMessageBox} from "element-plus";
 
 const DRIVER=0;                 //' 驱动器
 const DIRECTORY=1;          //' 文件夹
@@ -83,13 +179,12 @@ const SYMBOL=3;               //' 软连接
 
 export default {
   name: "FileDiff",
-  components: {Files, Folder, FolderOpened, MessageBox,Link},
+  components: {Remove, Plus, Files, Folder, FolderOpened, MessageBox,Link},
   data(){
     return {
       boxHeight:400,
       treeItemHeight:26,
       viewPortNodes:null,   //视窗可见节点数+2
-      testcolor:'green',
 
 
       base: '',//D:/Note
@@ -156,6 +251,26 @@ export default {
       remoteResolve:null,
 
 
+      view:{
+        mergeConf:{
+          coverModeOptions:[
+            {value:'1',label:'增量同步',desc:'不影响已有文件，只传输缺失'},
+            {value:'2',label:'全量同步',desc:'完全复制所有数据，删除不受控内的文件'}
+          ],
+          collapse:'5'
+        }
+      },
+      treeMergeConf:{
+        coverMode:'1',
+        match:{
+          exact:[],
+          regex:[]
+        },
+        except:{
+          exact:[],
+          regex:[]
+        }
+      },
       treePropName:{
         label: 'name',                //. label读 name字段
         isLeaf: 'leaf',                 //. 是否叶子读leaf字段
@@ -223,6 +338,9 @@ export default {
         {id:0,children:this.rightTree},null,null,
         true,false);                                                                          //初始化对比
     this.viewPortNodes=(this.boxHeight/this.treeItemHeight)+2;                //初始化可视节点数
+    let change=this.buildDrawStruct();
+    this.drawDiff(change);
+
     //this.read();
     /*window.files.onFileStructReply(function(struct){
       _this.remoteResolve(_this.resolveNode(struct));
@@ -240,6 +358,33 @@ export default {
     clearInterval(this.timer);
   },
   methods:{
+    addMergeConf(type){
+      let filters=(arr)=>arr.some(i=>!i.value);
+      let arr;
+      switch (type){
+        case 1:arr=this.treeMergeConf.match.exact;break;
+        case 2:arr=this.treeMergeConf.match.regex;break;
+        case 3:arr=this.treeMergeConf.except.exact;break;
+        case 4:arr=this.treeMergeConf.except.regex;break;
+      }
+      if(filters(arr)){
+        return ElMessage.error('请先填完前面留空规则');
+      }
+      arr.push({value:'',type:this.treeMergeConf.coverMode});
+    },
+    deleteMergeConf(type,idx,item){
+      let arr;
+      switch (type){
+        case 1:arr=this.treeMergeConf.match.exact;break;
+        case 2:arr=this.treeMergeConf.match.regex;break;
+        case 3:arr=this.treeMergeConf.except.exact;break;
+        case 4:arr=this.treeMergeConf.except.regex;break;
+      }
+      //arr.splice(arr.indexOf(item),1);
+      arr.splice(idx,1);
+    },
+
+
     //,render
     //.初始化节点数据
     registerRef(node, data) {
@@ -354,6 +499,9 @@ export default {
         clearTimeout(this.right.scrollTimer);
         this.right.scrollTimer = setTimeout(() => this.right.scrolling = false, 10);
       }
+
+    },
+    mergeTree(){
 
     },
     buildDrawStruct(){
@@ -797,6 +945,20 @@ export default {
   /*padding: 4px 0;*/
 }
 
+.merge-config-panel{
+  text-align: left;
+  color: #409EFF;
+}
+.merge-config-panel .el-icon{
+  cursor: pointer;
+}
+.merge-config-rule-item{
+  margin: 4px 0;
+}
+.merge-config-rule-item .el-select{
+  width: 100px;
+}
+
 .no-pad{/*'无内边距*/
   padding: 0;
 }
@@ -819,49 +981,48 @@ export default {
 
 <!--全局-->
 <style>
-/*
 .el-tree-node__content:hover {
-  background-color: #dcecf9 !important;
+  /*background-color: #eae7ff !important;*/
 }
 .el-tree-node:focus>.el-tree-node__content{
-  background-color: #dcecf9!important;
-}*/
+  /*background-color: #eae7ff!important;*/
+}
 
 /*左新增*/
 .node-add0>.el-tree-node__content{
-  background-color: v-bind('styles.node.add.fill[0]');
+  background-color: v-bind('styles.node.add.fill[0]')!important;
 }
 .node-add1>.el-tree-node__content{
-  background-color: v-bind('styles.node.add.fill[1]');
+  background-color: v-bind('styles.node.add.fill[1]')!important;
 }
 .node-add2>.el-tree-node__content{
-  background-color: v-bind('styles.node.add.fill[2]');
+  background-color: v-bind('styles.node.add.fill[2]')!important;
 }
 .node-border-bottom-add>.el-tree-node__content{
-  border-bottom: v-bind('styles.node.add.borderBottom');
+  border-bottom: v-bind('styles.node.add.borderBottom')!important;
 }
 /*左编辑*/
 .node-edit0>.el-tree-node__content{
-  background-color: v-bind('styles.node.edit.fill[0]');
+  background-color: v-bind('styles.node.edit.fill[0]')!important;
 }
 .node-edit1>.el-tree-node__content{
-  background-color: v-bind('styles.node.edit.fill[1]');
+  background-color: v-bind('styles.node.edit.fill[1]')!important;
 }
 .node-edit2>.el-tree-node__content{
-  background-color: v-bind('styles.node.edit.fill[2]');
+  background-color: v-bind('styles.node.edit.fill[2]')!important;
 }
 /*右新增*/
 .node-removed0>.el-tree-node__content{
-  background-color: v-bind('styles.node.removed.fill[0]');
+  background-color: v-bind('styles.node.removed.fill[0]')!important;
 }
 .node-removed1>.el-tree-node__content{
-  background-color: v-bind('styles.node.removed.fill[1]');
+  background-color: v-bind('styles.node.removed.fill[1]')!important;
 }
 .node-removed2>.el-tree-node__content{
-  background-color: v-bind('styles.node.removed.fill[2]');
+  background-color: v-bind('styles.node.removed.fill[2]')!important;
 }
 .node-border-bottom-removed>.el-tree-node__content{
-  border-bottom: v-bind('styles.node.removed.borderBottom');
+  border-bottom: v-bind('styles.node.removed.borderBottom')!important;
 }
 
 
@@ -872,13 +1033,7 @@ export default {
 
 
 
-.test-node{
-  background-color: red;
-}
 
-.test-node1{
-  background-color: v-bind('testcolor');
-}
 
 .el-tree-node__content {
   box-sizing: border-box!important;
