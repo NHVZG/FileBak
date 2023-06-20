@@ -1,11 +1,19 @@
 <template>
   <el-row>
+    <el-col :span="9"></el-col>
+    <el-col :span="6">
+      <el-switch active-text="合并后" inactive-text="全部节点" v-model="view.midTreeFilterMode" @change="onFilterModeChange"></el-switch>
+    </el-col>
+    <el-col :span="9"></el-col>
+  </el-row>
+  <el-row>
+    <!--
     <el-col :span="10">
       <div class="box left-scroll" :style="`height:${boxHeight}px`" @scroll="onLeftBoxScroll" ref="leftTreeBox">
         <el-tree :props="treePropName" :data="leftTree" ref="leftTree" default-expand-all>
           <template #default="{ node, data }">
 
-            <div class="diff-node" :ref="registerRef(node,data)" :data-node-id="`${node.id}`" :data-node-level="`${node.level}`" :id="`node_${node.id}`">
+            <div class="diff-node" :ref="registerRef(node,data)" :data-node-id="`${data.id}`" :data-node-bsid="data.bsid" :data-node-level="`${node.level}`" :id="`node_${node.id}`">
               <span>
                 <el-text v-if="data.display">
                     <el-icon v-if="data.type===0"><MessageBox /></el-icon>
@@ -39,7 +47,103 @@
         <el-tree :props="treePropName" :data="rightTree" ref="rightTree" default-expand-all>
           <template #default="{ node, data }">
 
-            <div class="diff-node" :ref="registerRef(node,data)" :data-node-id="`${node.id}`" :data-node-level="`${node.level}`" :id="`node_${node.id}`">
+            <div class="diff-node" :ref="registerRef(node,data)" :data-node-id="`${data.id}`" :data-node-bsid="data.bsid" :data-node-level="`${node.level}`" :id="`node_${node.id}`">
+              <span>
+                <el-text v-if="data.display">
+                    <el-icon v-if="data.type===0"><MessageBox /></el-icon>
+                    <el-icon v-if="data.type===1&&!node.expanded" color="#c89065"><Folder/></el-icon>
+                    <el-icon v-if="data.type===1&&node.expanded" color="#c89065"><FolderOpened/></el-icon>
+                    <el-icon v-if="data.type===2" color="#689e82"><Files /></el-icon>
+                    <el-icon v-if="data.type===3"><Link /></el-icon>
+                </el-text>
+                <span class="node-text" :title="node.label"><span>{{node.id}}-{{ node.label }}</span></span>
+                <span style="float: right">
+                  <el-link  type="primary"  :underline="false" @click="chooseLeft($event,data,node)" :disabled="right.choose&&right.choosePath!==data.path">
+                    {{right.choose?right.choosePath===data.path?'取消':'':'选中'}}
+                  </el-link>
+                </span>
+              </span>
+            </div>
+
+          </template>
+        </el-tree>
+      </div>
+    </el-col>
+      -->
+    <el-col :span="7">
+      <div class="box left-scroll" :style="`height:${boxHeight}px`" @scroll="onLeftBoxScroll" ref="leftTreeBox">
+        <el-tree :props="treePropName" :data="leftTree" ref="leftTree" default-expand-all>
+          <template #default="{ node, data }">
+
+            <div class="diff-node" :ref="registerRef(node,data)" :data-node-id="`${data.id}`" :data-node-bsid="data.bsid" :data-node-level="`${node.level}`" :id="`node_${node.id}`">
+              <span>
+                <el-text v-if="data.display">
+                    <el-icon v-if="data.type===0"><MessageBox /></el-icon>
+                    <el-icon v-if="data.type===1&&!node.expanded" color="#c89065"><Folder/></el-icon>
+                    <el-icon v-if="data.type===1&&node.expanded" color="#c89065"><FolderOpened/></el-icon>
+                    <el-icon v-if="data.type===2" color="#689e82"><Files /></el-icon>
+                    <el-icon v-if="data.type===3"><Link /></el-icon>
+                </el-text>
+                <span class="node-text" :title="node.label"><span>{{node.id}}-{{ node.label }}</span></span>
+                <span style="float: right">
+                  <el-link  type="primary"  :underline="false" @click="chooseLeft($event,data,node)" :disabled="left.choose&&left.choosePath!==data.path">
+                    {{left.choose?left.choosePath===data.path?'取消':'':'选中'}}
+                  </el-link>
+                </span>
+              </span>
+            </div>
+
+          </template>
+        </el-tree>
+      </div>
+    </el-col>
+
+    <el-col :span="2">
+      <div style="height: 400px;">
+        <canvas style="height: 100%;width: 100%" ref="canvas"></canvas>
+      </div>
+    </el-col>
+
+    <el-col :span="6">
+      <div class="box left-scroll" :style="`height:${boxHeight}px`" @scroll="" ref="midTreeBox">
+        <el-tree :props="treePropName" :data="midTree" ref="midTree"  :filter-node-method="filterNode" default-expand-all>
+          <template #default="{ node, data }">
+
+            <div class="diff-node" :ref="registerRef(node,data)" :data-node-id="`${data.id}`" :data-node-bsid="data.bsid" :data-node-level="`${node.level}`" :id="`node_${node.id}`">
+              <span>
+                <el-text v-if="data.display">
+                    <el-icon v-if="data.type===0"><MessageBox /></el-icon>
+                    <el-icon v-if="data.type===1&&!node.expanded" color="#c89065"><Folder/></el-icon>
+                    <el-icon v-if="data.type===1&&node.expanded" color="#c89065"><FolderOpened/></el-icon>
+                    <el-icon v-if="data.type===2" color="#689e82"><Files /></el-icon>
+                    <el-icon v-if="data.type===3"><Link /></el-icon>
+                </el-text>
+                <span class="node-text" :title="node.label"><span>{{node.id}}-{{ node.label }}</span></span>
+                <span style="float: right">
+<!--                  <el-link  type="primary"  :underline="false" @click="chooseLeft($event,data,node)" :disabled="left.choose&&left.choosePath!==data.path">
+                    {{left.choose?left.choosePath===data.path?'取消':'':'选中'}}
+                  </el-link>-->
+                </span>
+              </span>
+            </div>
+
+          </template>
+        </el-tree>
+      </div>
+    </el-col>
+
+    <el-col :span="2">
+      <div style="height: 400px;">
+        <canvas style="height: 100%;width: 100%" ref="canvas1"></canvas>
+      </div>
+    </el-col>
+
+    <el-col :span="7">
+      <div class="box" :style="`height:${boxHeight}px`" @scroll="onRightBoxScroll" ref="rightTreeBox">
+        <el-tree :props="treePropName" :data="rightTree" ref="rightTree" default-expand-all>
+          <template #default="{ node, data }">
+
+            <div class="diff-node" :ref="registerRef(node,data)" :data-node-id="`${data.id}`" :data-node-bsid="data.bsid" :data-node-level="`${node.level}`" :id="`node_${node.id}`">
               <span>
                 <el-text v-if="data.display">
                     <el-icon v-if="data.type===0"><MessageBox /></el-icon>
@@ -74,20 +178,30 @@
     <el-collapse accordion v-model="view.mergeConf.collapse">
       <el-collapse-item title="全局同步模式" name="5">
         <div>
-          <el-select v-model="treeMergeConf.coverMode">
-              <el-option v-for="item in view.mergeConf.coverModeOptions" :key="item.value" :label="item.label" :value="item.value">
-                <el-popover placement="right-end" :width="200" trigger="hover" :content="item.desc" effect="dark" hide-after="100">
-                  <template #reference><div>{{item.label}}</div></template>
-                </el-popover>
-              </el-option>
-          </el-select>
+          <el-form>
+            <el-form-item>
+              <el-radio-group v-model="treeMergeConf.coverActiveMode">
+                <el-radio-button label="1">仅匹配规则路径生效</el-radio-button>
+                <el-radio-button label="2">整个目录生效</el-radio-button>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item>
+              <el-select v-model="treeMergeConf.coverMode">
+                  <el-option v-for="item in view.mergeConf.coverModeOptions" :key="item.value" :label="item.label" :value="item.value">
+                    <el-popover placement="right-end" :width="200" trigger="hover" :content="item.desc" effect="dark" :hide-after="100">
+                      <template #reference><div>{{item.label}}</div></template>
+                    </el-popover>
+                  </el-option>
+              </el-select>
+            </el-form-item>
+          </el-form>
         </div>
       </el-collapse-item>
       <el-collapse-item name="1">
         <template #title>路径匹配</template>
         <div>
           <div class="merge-config-panel"><el-icon @click="addMergeConf(1)"><Plus /></el-icon></div>
-          <div v-for="(item,idx) in treeMergeConf.match.exact" class="merge-config-rule-item">
+          <div v-for="(item,idx) in treeMergeConf.cover.exact" class="merge-config-rule-item">
             <el-row :gutter="2">
             <el-col :span="18">
               <el-input v-model="item.value"/>
@@ -105,7 +219,7 @@
       <el-collapse-item title="正则匹配" name="2">
         <div>
           <div class="merge-config-panel"><el-icon @click="addMergeConf(2)"><Plus /></el-icon></div>
-          <div v-for="(item,idx) in treeMergeConf.match.regex" class="merge-config-rule-item">
+          <div v-for="(item,idx) in treeMergeConf.cover.regex" class="merge-config-rule-item">
             <el-row :gutter="2">
               <el-col :span="18">
                 <el-input v-model="item.value"/>
@@ -129,9 +243,6 @@
                 <el-input v-model="item.value"/>
               </el-col>
               <el-col :span="6">
-                <el-select v-model="item.type">
-                  <el-option v-for="item in view.mergeConf.coverModeOptions" :key="item.value" :label="item.label" :value="item.value"/>
-                </el-select>
                 <el-text>&nbsp;<el-icon @click="deleteMergeConf(3,idx,item)" style="color: red;cursor: pointer;"><Remove /></el-icon></el-text>
               </el-col>
             </el-row>
@@ -147,15 +258,43 @@
                 <el-input v-model="item.value"/>
               </el-col>
               <el-col :span="6">
-                <el-select v-model="item.type">
-                  <el-option v-for="item in view.mergeConf.coverModeOptions" :key="item.value" :label="item.label" :value="item.value"/>
-                </el-select>
                 <el-text>&nbsp;<el-icon @click="deleteMergeConf(4,idx,item)" style="color: red;cursor: pointer"><Remove /></el-icon></el-text>
               </el-col>
             </el-row>
           </div>
         </div>
       </el-collapse-item>
+      <el-collapse-item title="删除路径" name="6">
+        <div>
+          <div class="merge-config-panel"><el-icon @click="addMergeConf(6)"><Plus /></el-icon></div>
+          <div v-for="(item,idx) in treeMergeConf.remove.exact" class="merge-config-rule-item">
+            <el-row :gutter="2">
+              <el-col :span="18">
+                <el-input v-model="item.value"/>
+              </el-col>
+              <el-col :span="6">
+                <el-text>&nbsp;<el-icon @click="deleteMergeConf(6,idx,item)" style="color: red;cursor: pointer;"><Remove /></el-icon></el-text>
+              </el-col>
+            </el-row>
+          </div>
+        </div>
+      </el-collapse-item>
+      <el-collapse-item title="删除正则" name="7">
+        <div>
+          <div class="merge-config-panel"><el-icon @click="addMergeConf(7)"><Plus /></el-icon></div>
+          <div v-for="(item,idx) in treeMergeConf.remove.regex" class="merge-config-rule-item">
+            <el-row :gutter="2">
+              <el-col :span="18">
+                <el-input v-model="item.value"/>
+              </el-col>
+              <el-col :span="6">
+                <el-text>&nbsp;<el-icon @click="deleteMergeConf(7,idx,item)" style="color: red;cursor: pointer"><Remove /></el-icon></el-text>
+              </el-col>
+            </el-row>
+          </div>
+        </div>
+      </el-collapse-item>
+
 
 
     </el-collapse>
@@ -169,7 +308,7 @@
 import {Link, Files, Folder, FolderOpened, MessageBox, Plus, Remove} from "@element-plus/icons-vue";
 import {detailedDiff} from "deep-object-diff";
 import $ from "jquery";
-import {list2map,recursiveTree} from "@/frontEnd/v3/components/common/util";
+import {list2map,recursiveTree,treeMap,treeLeaf,elTreeParent} from "@/frontEnd/v3/components/common/util";
 import {ElMessage, ElMessageBox} from "element-plus";
 
 const DRIVER=0;                 //' 驱动器
@@ -189,6 +328,7 @@ export default {
 
       base: '',//D:/Note
       tree:[],
+      midTree:[],
       leftTree:[
         {"type":0,"name":"C","label":"C","path":"C:/","display":true,"leaf":false,id:'abc'},
         {"type":0,"name":"D","label":"D","path":"D:/","display":true,"leaf":false,
@@ -222,7 +362,7 @@ export default {
                 {"type":1,"name":".config2","label":".config2","path":"D:/Coding/.config2","display":true,"leaf":false},
                 {"type":1,"name":".config3","label":".config3","path":"D:/Coding/.config3","display":true,"leaf":false}
               ]},
-            {"type":1,"name":".Game1","label":"Game1","path":"D:/Coding/Game1","display":true,"leaf":false},
+            {"type":1,"name":".Game1","label":"Game1","path":"D:/Game1","display":true,"leaf":false,children: [    {"type":2,"name":".test","label":".test","path":"D:/Game1/.test","display":true,"leaf":true}]},
             {"type":1,"name":"Game","label":"Game","path":"D://Game","display":true,"leaf":false},{"type":1,"name":"Home","label":"Home","path":"D://Home","display":true,"leaf":false},{"type":1,"name":"Note","label":"Note","path":"D://Note","display":true,"leaf":false},{"type":1,"name":"Software","label":"Software","path":"D://Software","display":true,"leaf":false},
             //{"type":1,"name":"Test","label":"Test","path":"D://Test","display":true,"leaf":false,children:[{"type":1,"name":".config","label":".config","path":"D:/Test/.config","display":true,"leaf":false},{"type":1,"name":"a","label":"a","path":"D:/Test/a","display":true,"leaf":false},{"type":1,"name":"Refer","label":"Refer","path":"D:/Test/Refer","display":true,"leaf":false}]},
             {"type":1,"name":"备份","label":"备份","path":"D://备份","display":true,"leaf":false},{"type":2,"name":"httpsbm.ruankao.org.cnsignup.txt","label":"httpsbm.ruankao.org.cnsignup.txt","path":"D://httpsbm.ruankao.org.cnsignup.txt","display":true,"leaf":true},{"type":2,"name":"Screenshot_20230201214717.jpg","label":"Screenshot_20230201214717.jpg","path":"D://Screenshot_20230201214717.jpg","display":true,"leaf":true},{"type":2,"name":"Screenshot_20230201214726.jpg","label":"Screenshot_20230201214726.jpg","path":"D://Screenshot_20230201214726.jpg","display":true,"leaf":true},{"type":2,"name":"微信图片_20220903142927.jpg","label":"微信图片_20220903142927.jpg","path":"D://微信图片_20220903142927.jpg","display":true,"leaf":true},
@@ -238,7 +378,7 @@ export default {
         {"type":0,"name":"C","label":"C","path":"C:/","display":true,"leaf":false},
         {"type":0,"name":"D","label":"D","path":"D:/","display":true,"leaf":false,expanded:true,
           children: [{"type":1,"name":"$RECYCLE.BIN","label":"$RECYCLE.BIN","path":"D://$RECYCLE.BIN","display":true,"leaf":false},{"type":1,"name":".temp","label":".temp","path":"D://.temp","display":true,"leaf":false,children:[{"type":1,"name":"t1","label":"t1","path":"D://.temp/t1","display":true,"leaf":false,children:[{"type":1,"name":"t11","label":"t11","path":"D://.temp/t1/t11","display":true,"leaf":true},]}]},
-            {"type":1,"name":"Coding","label":"Coding","path":"D://Coding","display":true,"leaf":false,children: [{"type":1,"name":".config","label":".config","path":"D:/Coding/.config","display":true,"leaf":false},{"type":1,"name":"Project","label":"Project","path":"D:/Coding/Project","display":true,"leaf":false},{"type":1,"name":"Refer","label":"Refer","path":"D:/Coding/Refer","display":true,"leaf":false,children:[{"type":1,"name":"v","label":"v","path":"D://Coding/Refer/v","display":true,"leaf":false,children:[{"type":1,"name":"f","label":"f","path":"D://Coding/Refer/v/f","display":true,"leaf":false,children:[{"type":1,"name":"h","label":"h","path":"D://Coding/Refer/v/f/h","display":true,"leaf":true}]},{"type":1,"name":"s","label":"s","path":"D://Coding/Refer/v/s","display":true,"leaf":true}]},{"type":1,"name":"t","label":"t","path":"D://Coding/Refer/t","display":true,"leaf":true}]}]},
+            {"type":1,"name":"Coding","label":"Coding","path":"D://Coding","display":true,"leaf":false,children: [{"type":1,"name":".config","label":".config","path":"D:/Coding/.config","display":true,"leaf":false,children: [{"name":"abc5.jpg","label":"abc5.jpg","path":"D:/Coding/.config/abc5.jpg","display":true,"leaf":true,type:2}]},{"type":1,"name":"Project","label":"Project","path":"D:/Coding/Project","display":true,"leaf":false},{"type":1,"name":"Refer","label":"Refer","path":"D:/Coding/Refer","display":true,"leaf":false,children:[{"type":1,"name":"v","label":"v","path":"D://Coding/Refer/v","display":true,"leaf":false,children:[{"type":1,"name":"f","label":"f","path":"D://Coding/Refer/v/f","display":true,"leaf":false,children:[{"type":1,"name":"h","label":"h","path":"D://Coding/Refer/v/f/h","display":true,"leaf":true}]},{"type":1,"name":"s","label":"s","path":"D://Coding/Refer/v/s","display":true,"leaf":true}]},{"type":1,"name":"t","label":"t","path":"D://Coding/Refer/t","display":true,"leaf":true}]}]},
             {"type":1,"name":"备份1","label":"备份1","path":"D://备份1","display":true,"leaf":false},
             {"type":1,"name":"Game","label":"Game","path":"D://Game","display":true,"leaf":false},{"type":1,"name":"Home","label":"Home","path":"D://Home","display":true,"leaf":false},{"type":1,"name":"Note","label":"Note","path":"D://Note","display":true,"leaf":false},{"type":1,"name":"Software","label":"Software","path":"D://Software","display":true,"leaf":false},
             {"type":1,"name":"Test","label":"Test","path":"D://Test","display":true,"leaf":false,children:[{"type":1,"name":".config","label":".config","path":"D:/Test/.config","display":true,"leaf":false},{"type":1,"name":"a","label":"a","path":"D:/Test/a","display":true,"leaf":false},{"type":1,"name":"Refer","label":"Refer","path":"D:/Test/Refer","display":true,"leaf":false}]},
@@ -252,23 +392,47 @@ export default {
 
 
       view:{
+        midTreeFilterMode:false,
+
         mergeConf:{
           coverModeOptions:[
             {value:'1',label:'增量同步',desc:'不影响已有文件，只传输缺失'},
-            {value:'2',label:'全量同步',desc:'完全复制所有数据，删除不受控内的文件'}
+            {value:'2',label:'全量同步',desc:'完全复制所有数据，删除不受控的文件'},
+            {value:'3',label:'覆盖增量同步',desc:'相同文件覆盖，传输新增文件，不删除不受控的文件'},
           ],
           collapse:'5'
         }
       },
       treeMergeConf:{
         coverMode:'1',
-        match:{
-          exact:[],
-          regex:[]
+        coverActiveMode:"1",
+        cover:{
+          exact:[
+            {value:'D:/Coding/Refer',type:'2'},
+            {value:'D:/Coding/.config',type:'3'}
+          ],
+          regex:[
+            {value:".*/3\\.jpg$",type:'2'},
+            {value:".*/Coding$",type:'1'},
+            //{value:".*/abc.*?\\.jpg$",type:'1'},
+          ]
         },
         except:{
-          exact:[],
-          regex:[]
+          exact:[
+            {value:'D://1.jpg'},
+            //{value:'D:/Coding/.config'},
+          ],
+          regex:[
+            {value:".*/6\\.jpg$"}
+          ]
+        },
+        remove:{
+          exact:[
+            {value:'D:/Test/.config'}
+          ],
+          regex:[
+            {value:'httpsbm\.ruankao\.org\.cnsignup\.txt'}
+          ]
         }
       },
       treePropName:{
@@ -278,6 +442,7 @@ export default {
         class:(data,node)=>data.class||data.borderClass?data.class+' '+data.borderClass:''
       },
       diffs:{},
+      difference:{},
       left:{
         scrollTimer:null,
         scrolling:false,
@@ -320,6 +485,35 @@ export default {
           normal:'inherit'
         }
       },
+      util:{
+        //, 叶子节点覆盖
+        onLeaf:function(type){
+          return leaf=>leaf.type=leaf.type>type?type:leaf.type;
+        },
+        //, 自定义规则 构建节点
+        buildLeaf:function(node,key,extraData,onLeaf,updateLeaf=false){
+            return map=>{
+              if (!node.bsid) return;
+              if (!map[key]) map[key] = {};
+              if(onLeaf){
+                let leaf = treeLeaf(node.bsid, '.', map[key], 'children', 'value');
+                if(leaf)return onLeaf(leaf);
+              }
+              if(updateLeaf)return;
+              let value={path:node.path,bsid:node.bsid,...extraData};
+              treeMap(node.bsid, value, '.', map[key], 'children', 'value');
+            }
+        },
+        check:function (node,rules,match){
+          let isMatch=false;
+          for (let r of rules) {
+            if (!r.test(node.path))continue;
+            isMatch=true;
+            match(r,node);
+          }
+          return isMatch;
+        }
+      },
       timer:null
     }
   },
@@ -329,6 +523,131 @@ export default {
     },
     rightScroll(){
       return this.left.scrolling?null:this.onRightBoxScroll
+    },
+    compileRules(){  //.编译初始化自定义规则
+      let {cover,except,remove}=this.treeMergeConf;
+
+      let buildRegex=(list,build)=>{
+        return list.map(item=>{
+          let regex=new RegExp(item.value);
+          return {test:(val)=>regex.test(val),...build(item,regex)};
+        });
+      };
+      let buildEqual=(list,build)=>{
+        return list.map(item=>{
+          return {test:(val)=>item.value===val,...build(item)};
+        });
+      };
+
+      return {
+        cover:[
+            ...buildRegex(cover.regex.filter(i=>i.type==='2'&&i.value),({value})=>({value,mode:'regex'})),
+            ...buildEqual(cover.exact.filter(i=>i.type==='2'&&i.value),({value})=>({value,mode:'exact'}))
+        ],
+        increment:[
+          ...buildRegex(cover.regex.filter(i=>i.type==='1'&&i.value),({value})=>({value,mode:'regex'})),
+          ...buildEqual(cover.exact.filter(i=>i.type==='1'&&i.value),({value})=>({value,mode:'exact'}))
+        ],
+        incrementCover:[
+          ...buildRegex(cover.regex.filter(i=>i.type==='3'&&i.value),({value})=>({value,mode:'regex'})),
+          ...buildEqual(cover.exact.filter(i=>i.type==='3'&&i.value),({value})=>({value,mode:'exact'}))
+        ],
+        except: [
+          ...buildRegex(except.regex.filter(i=>i.value),rule=>({...rule,mode:'regex'})),
+          ...buildEqual(except.exact.filter(i=>i.value),rule=>({...rule,mode:'exact'}))
+        ],
+        remove: [
+          ...buildRegex(remove.regex.filter(i=>i.value),rule=>({...rule,mode:'regex'})),
+          ...buildEqual(remove.exact.filter(i=>i.value),rule=>({...rule,mode:'exact'}))
+        ]
+      };
+    },
+    filterRules(){
+      let filter=(key)=>{
+        return (node,diff)=>{
+          let leaf=treeLeaf(node.bsid, '.', diff[key], 'children', 'value');
+          return leaf&&leaf.type<3;
+        };
+      };
+      return {
+        add: filter('add'),
+        except: filter('except'),
+        remove: filter('remove'),
+        cover: filter('cover'),
+        common:(node,diff)=>treeLeaf(node.bsid, '.', diff.common, 'children', 'value')
+      }
+    },
+    customRules(){    //.自定义规则
+      let util=this.util;
+      let {increment,cover,except,remove,incrementCover}=this.compileRules;
+      let conf=(key,rules,order)=>{
+        return {
+          compile(left,right,pLeft,pRight,side) {
+            let node = side === 'left' ? left : right;
+            let match = {regex:[],exact:[]};
+            let isMatch=util.check(node,rules,rule=>match[rule.mode].push(rule.value));
+            return {
+              match: isMatch,
+              child: true,
+              parent: true,
+              build: util.buildLeaf(node, key, {type:1,...match}, util.onLeaf(1), match.exact.length === 0 && match.regex.length === 0),
+              buildChild: util.buildLeaf(node, key, {type:2,...match}, util.onLeaf(2), false),                                                                                           //子节点继承父节点规则，即使不匹配也要写入
+              buildParent: util.buildLeaf(node, key, {type:3,...match}, util.onLeaf(3), match.exact.length === 0 && match.regex.length === 0)
+            };
+          },
+          name:key,
+          order
+        };
+      };
+      return [
+          conf('except',except,100),                                                   //例外
+          conf('remove',remove,101),                                                //删除
+          conf('cover',cover,102),                                                       //全量
+          conf('increment',increment,103),                                       //增量
+          conf('incrementCover',incrementCover,104),                    //增量覆盖
+      ];
+    },
+    rules() { //.固有规则
+      let util=this.util;
+      let build=(node,key,extraData)=>{
+        return map=> {
+          if (!node.bsid)return;
+          if (!map[key]) map[key] = {};
+          let value={path:node.path,bsid:node.bsid,...extraData};
+          treeMap(node.bsid, value, '.', map[key], 'children', 'value');
+        };
+      };
+      let add={
+        compile(left,right,pLeft,pRight,side){
+          let node=side==='left'?left:right;
+          return {
+            match: side==='left'?left&&(!right):right&&(!left),
+            child: true,
+            parent: false,
+            build:util.buildLeaf(node,'add',{type:1}),
+            buildChild:util.buildLeaf(node,'add',{type:2}),
+            buildParent:util.buildLeaf(node,'add',{type:3})
+          };
+        },
+        name:'add',
+        order:0
+      };
+      let common={
+        compile(left,right,pLeft,pRight,side){
+          let node=side==='left'?left:right;
+          return {
+            match: left&&right,
+            child: false,
+            parent: true,
+            build:util.buildLeaf(node,'common',{type:1}),
+            buildChild:util.buildLeaf(node,'common',{type:2}),
+            buildParent:util.buildLeaf(node,'common',{type:3})
+          };
+        },
+        name:'common',
+        order:1
+      };
+      return [add,common];
     }
 
   },
@@ -341,6 +660,20 @@ export default {
     let change=this.buildDrawStruct();
     this.drawDiff(change);
 
+    let diffs={left:{},right:{}};
+    this.findDiff(diffs,{id:0,bsid:'',children:this.leftTree}, {id:0,bsid:'',children:this.rightTree},null,null,[...this.rules,...this.customRules],{left: new Set(),right:new Set()});
+    this.difference=diffs;
+    console.log(diffs);
+
+    let midTree={};
+    this.mergeTree(this.leftTree,'left',midTree);
+    this.mergeTree(this.rightTree,'right',midTree);
+    this.midTree=midTree.children;
+    console.log(midTree);
+
+
+    let leaf = treeLeaf('2.7.12.13', '.', diffs.left.add, 'children', 'value');
+    console.log(leaf);
     //this.read();
     /*window.files.onFileStructReply(function(struct){
       _this.remoteResolve(_this.resolveNode(struct));
@@ -362,10 +695,12 @@ export default {
       let filters=(arr)=>arr.some(i=>!i.value);
       let arr;
       switch (type){
-        case 1:arr=this.treeMergeConf.match.exact;break;
-        case 2:arr=this.treeMergeConf.match.regex;break;
+        case 1:arr=this.treeMergeConf.cover.exact;break;
+        case 2:arr=this.treeMergeConf.cover.regex;break;
         case 3:arr=this.treeMergeConf.except.exact;break;
         case 4:arr=this.treeMergeConf.except.regex;break;
+        case 6:arr=this.treeMergeConf.remove.exact;break;
+        case 7:arr=this.treeMergeConf.remove.regex;break;
       }
       if(filters(arr)){
         return ElMessage.error('请先填完前面留空规则');
@@ -375,10 +710,12 @@ export default {
     deleteMergeConf(type,idx,item){
       let arr;
       switch (type){
-        case 1:arr=this.treeMergeConf.match.exact;break;
-        case 2:arr=this.treeMergeConf.match.regex;break;
+        case 1:arr=this.treeMergeConf.cover.exact;break;
+        case 2:arr=this.treeMergeConf.cover.regex;break;
         case 3:arr=this.treeMergeConf.except.exact;break;
         case 4:arr=this.treeMergeConf.except.regex;break;
+        case 6:arr=this.treeMergeConf.remove.exact;break;
+        case 7:arr=this.treeMergeConf.remove.regex;break;
       }
       //arr.splice(arr.indexOf(item),1);
       arr.splice(idx,1);
@@ -389,6 +726,7 @@ export default {
     //.初始化节点数据
     registerRef(node, data) {
       data.id = node.id;
+      data.bsid = node.parent.data.bsid?(node.parent.data.bsid+'.'+node.id):(node.id+'');
       data.pid=node.parent.id;
       data.level=node.level;
       return `node_${node.id}`;
@@ -458,15 +796,267 @@ export default {
       //node.expanded=true;
     },
 
+   //%v2
+    onFilterModeChange(type){
+      this.$refs.midTree.filter(type);
+    },
+    filterNode(type,data,node){
+      if(!type)return true;
+      if(!node.parent.visible)return false;
 
-    buildMergeItem(type){
-      switch (type){
-        case 'add': return {left:{start:null,end:null,e:[]},right:{e:null,y:null}};
-        case 'edit': return {left:{start:null,end:null,e:[]},right:{start:null,end:null,e:[]}};
-        case 'removed': return {left:{e:null,y:null},right:{start:null,end:null,e:[]}};
+      let ignore=data.left&&this.filterRules.except(data.left, this.difference.left);
+      let remove=data.right&&this.filterRules.remove(data.right, this.difference.right);
+      if(!data.right&&ignore)return false;
+      if(!data.left&&remove)return false;
+      if(data.left&&data.right&&ignore&&remove)return false;
+
+      //右新增节点-如果匹配到左边全量匹配则 需要过滤
+      if(!data.left) {
+        let pLeftNode = elTreeParent(node, (node) => node.data.left);
+        if (pLeftNode && this.filterRules.cover(pLeftNode.data.left, this.difference.left)) return false;
+      }
+
+      return true;
+    },
+    coloring(){
+
+
+    },
+    visibleNode(){
+
+    },
+    //, 构建合并树
+    //[except],[remove]
+    mergeTree(tree,from,map){
+      for(let node of tree){
+        recursiveTree(
+            node,
+            'children',
+            ({path,bsid,type,label,name,display,id},pNode,pVal)=>{
+              if(pVal.children){
+                let nodes=pVal.children.filter(i=>i.path===path);
+                if(nodes.length>0){
+                  nodes[0][from]={path,bsid,type,name,id}
+                  return nodes[0];
+                }
+              }else{
+                pVal.children=[];
+              }
+              let child={from,path,bsid,type,label,name,display,[from]:{path,bsid,type,name,id}};
+              pVal.children.push(child);
+              return child;
+            },
+            null,
+            map
+        );
       }
     },
 
+
+
+    //, 对比两棵树 初始化节点关系
+    findDiff(diffs,leftNode,rightNode,pLeftNode,pRightNode,rules,parentRules={left: new Set(),right: new Set()}){
+      let leftMap = leftNode?list2map(leftNode.children,'path'):{};
+      let rightMap = rightNode?list2map(rightNode.children,'path'):{};
+      let curRules={left:new Set(),right:new Set()};
+
+      for(let entry of Object.entries(leftMap)) {
+        let path = entry[0];
+        let left = entry[1];
+        let right=rightMap[path];
+        let subRules={left:new Set(parentRules.left),right:new Set(parentRules.right)};  //子节点覆盖的规则
+        //. 左节点构建父节点传递子节点规则
+        for(let rule of parentRules.left){
+          rule.compile(left,right,leftNode,rightNode,'left').buildChild(diffs.left);
+        }
+        //. 左节点构建自身匹配规则
+        for(let ruleBuilder of rules){
+          let rule=ruleBuilder.compile(left,right,leftNode,rightNode,'left');
+          if(!rule.match)continue;
+
+          rule.build(diffs.left);
+
+          if(rule.child){
+            subRules.left.add(ruleBuilder);
+          }
+          if(rule.parent){
+            curRules.left.add(ruleBuilder);
+          }
+        }
+        let matchSubRules=this.findDiff(diffs,left,right,leftNode,rightNode,rules, subRules);//. 遍历所有左新增，共同节点
+        matchSubRules.left.forEach(s=>{
+          s.compile(leftNode,rightNode,pLeftNode,pRightNode,'left').buildParent(diffs.left);
+          curRules.left.add(s)
+        });
+        matchSubRules.right.forEach(s=>{
+          s.compile(leftNode,rightNode,pLeftNode,pRightNode,'right').buildParent(diffs.right);
+          curRules.right.add(s)
+        });
+      }
+
+      for(let entry of Object.entries(rightMap)) {
+        let subRules={left:new Set(parentRules.left),right:new Set(parentRules.right)};  //子节点覆盖的规则
+        let right = entry[1];
+        //. 右节点构建父节点传递子节点规则
+        for(let ruleBuilder of rules){
+          let rule=ruleBuilder.compile(leftMap[entry[0]],right,leftNode,rightNode,'right');
+          if(!rule.match)continue;
+
+          rule.build(diffs.right);
+
+          if(rule.child){//右新增节点
+            subRules.right.add(ruleBuilder);
+          }
+          if(rule.parent){
+            curRules.right.add(ruleBuilder);
+          }
+        }
+        if(!leftMap[entry[0]]){//. 遍历右新增节点
+          let matchSubRules=this.findDiff(diffs,null,right,leftNode,rightNode,rules, subRules);
+          matchSubRules.right.forEach(s=>{
+            s.compile(leftNode,rightNode,pLeftNode,pRightNode,'right').buildParent(diffs.right);
+            curRules.right.add(s)
+          });
+        }
+      }
+
+      return curRules;
+
+
+
+      /*let leftMap = leftNode?list2map(leftNode.children,'path'):{};
+      let rightMap = rightNode?list2map(rightNode.children,'path'):{};
+      let curRules={left:new Set(),right:new Set()};
+      for(let entry of Object.entries(leftMap)) {
+        let path = entry[0];
+        let left = entry[1];
+        let right=rightMap[path];
+        let subRules={left:new Set(parentRules.left),right:new Set(parentRules.right)};  //子节点覆盖的规则
+        //. 左节点构建父节点传递子节点规则
+        for(let rule of parentRules.left){
+          rule.compile(left,right,leftNode,rightNode,'left').buildChild(diffs.left);
+        }
+        //. 左节点构建自身匹配规则
+        for(let ruleBuilder of rules){
+          let rule=ruleBuilder.compile(left,right,leftNode,rightNode,'left');
+          if(!rule.match)continue;
+
+          rule.build(diffs.left);
+
+          if(rule.child){
+              subRules.left.add(ruleBuilder);
+          }
+          if(rule.parent){
+            curRules.left.add(ruleBuilder);
+          }
+        }
+        let matchSubRules=this.findDiff(diffs,left,right,leftNode,rightNode,rules, subRules);//. 遍历所有左新增，共同节点
+        matchSubRules.left.forEach(s=>{
+          s.compile(leftNode,rightNode,pLeftNode,pRightNode,'left').buildParent(diffs.left);
+          curRules.left.add(s)
+        });
+        matchSubRules.right.forEach(s=>{
+          s.compile(leftNode,rightNode,pLeftNode,pRightNode,'right').buildParent(diffs.right);
+          curRules.right.add(s)
+        });
+      }
+
+      for(let entry of Object.entries(rightMap)) {
+        let subRules={left:new Set(parentRules.left),right:new Set(parentRules.right)};  //子节点覆盖的规则
+        let right = entry[1];
+        //. 右节点构建父节点传递子节点规则
+        for(let ruleBuilder of rules){
+          let rule=ruleBuilder.compile(leftMap[entry[0]],right,leftNode,rightNode,'right');
+          if(!rule.match)continue;
+
+          rule.build(diffs.right);
+
+          if(rule.child){//右新增节点
+            subRules.right.add(ruleBuilder);
+          }
+          if(rule.parent){
+            curRules.right.add(ruleBuilder);
+          }
+        }
+        if(!leftMap[entry[0]]){//. 遍历右新增节点
+          let matchSubRules=this.findDiff(diffs,null,right,leftNode,rightNode,rules, subRules);
+          matchSubRules.right.forEach(s=>{
+            s.compile(leftNode,rightNode,pLeftNode,pRightNode,'right').buildParent(diffs.right);
+            curRules.right.add(s)
+          });
+        }
+      }
+
+      return curRules;*/
+
+
+      /*let leftMap = list2map(leftNode.children,'path');
+      let rightMap = list2map(rightNode.children,'path');
+      let curRules={left:new Set(),right:new Set()};
+      for(let entry of Object.entries(leftMap)) {
+        let path = entry[0];
+        let left = entry[1];
+        let right=rightMap[path];
+        let subRules={left:new Set(parentRules.left),right:new Set(parentRules.right)};  //子节点覆盖的规则
+        //. 左节点构建父节点传递子节点规则
+        for(let rule of parentRules.left){
+          rule.compile(left,right,leftNode,rightNode,'left').buildChild(diffs.left);
+        }
+        //. 左节点构建自身匹配规则
+        for(let ruleBuilder of rules){
+          let rule=ruleBuilder.compile(left,right,leftNode,rightNode,'left');
+          if(!rule.match)continue;
+
+          rule.build(diffs.left);
+
+          if(rule.child){
+            if(right){
+              subRules.left.add(ruleBuilder);
+            }else {
+              recursiveTree(left, 'children', (node, pNode) => pNode && ruleBuilder.compile(node, null, pNode, null, 'left').buildChild(diffs.left));
+            }
+          }
+          if(rule.parent){
+            curRules.left.add(ruleBuilder);
+          }
+        }
+        if(right){
+          let matchSubRules=this.findDiff(diffs,left,right,leftNode,rightNode,rules, subRules);
+          matchSubRules.left.forEach(s=>{
+            s.compile(leftNode,rightNode,pLeftNode,pRightNode,'left').buildParent(diffs.left);
+            curRules.left.add(s)
+          });
+          matchSubRules.right.forEach(s=>{
+            s.compile(leftNode,rightNode,pLeftNode,pRightNode,'right').buildParent(diffs.right);
+            curRules.right.add(s)
+          });
+        }
+      }
+
+      for(let entry of Object.entries(rightMap)) {
+        //if(leftMap[entry[0]])continue;
+        let right = entry[1];
+        //. 右节点构建父节点传递子节点规则
+        for(let ruleBuilder of rules){
+          let rule=ruleBuilder.compile(leftMap[entry[0]],right,leftNode,rightNode,'right');
+          if(!rule.match)continue;
+
+          rule.build(diffs.right);
+
+          if(rule.child){//右新增节点
+            recursiveTree(right,'children',(node,pNode)=>pNode&&ruleBuilder.compile(null,node,null,pNode,'right').buildChild(diffs.right));
+          }
+
+          if(rule.parent){
+            curRules.right.add(ruleBuilder);
+          }
+        }
+      }
+
+      return curRules;*/
+    },
+
+    //%v1
     onLeftBoxScroll(){
       let change=this.buildDrawStruct();
       this.drawDiff(change);
@@ -481,7 +1071,7 @@ export default {
 
         this.$refs.rightTreeBox.scrollTo({top: e.offsetTop - change.firstCommon.left.y-5});//behavior: 'smooth' 会导致一直左右滚动
         clearTimeout(this.left.scrollTimer);
-        this.left.scrollTimer = setTimeout(() => this.left.scrolling = false, 10);
+        this.left.scrollTimer = setTimeout(() => this.left.scrolling = false, 50);
       }
     },
     onRightBoxScroll(){
@@ -497,7 +1087,7 @@ export default {
         let e=$(this.$refs.leftTree.$el).find(`[data-node-id=${common.l_id}]`)[0];
         this.$refs.leftTreeBox.scrollTo({top: e.offsetTop - change.firstCommon.right.y-5});
         clearTimeout(this.right.scrollTimer);
-        this.right.scrollTimer = setTimeout(() => this.right.scrolling = false, 10);
+        this.right.scrollTimer = setTimeout(() => this.right.scrolling = false, 50);
       }
 
     },
