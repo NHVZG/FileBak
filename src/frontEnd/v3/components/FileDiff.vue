@@ -1,6 +1,19 @@
 <template>
   <el-row>
-    <el-col :span="9"></el-col>
+    <el-col :span="9">
+      <el-form>
+        <el-form-item><el-switch active-text="无模式着色" inactive-text="模式着色" v-model="view.colorMode"></el-switch></el-form-item>
+        <el-form-item>
+          <el-checkbox :disabled="view.colorMode" v-model="view.colorMode1" label="全量同步"></el-checkbox>
+          <el-checkbox :disabled="view.colorMode" v-model="view.colorMode3" label="增量同步"></el-checkbox>
+        </el-form-item>
+        <el-form-item>
+          <el-checkbox :disabled="view.colorMode" v-model="view.colorMode3" label="覆盖增量同步"></el-checkbox>
+          <el-checkbox :disabled="view.colorMode" v-model="view.colorMode4" label="同步"></el-checkbox>
+        </el-form-item>
+      </el-form>
+
+    </el-col>
     <el-col :span="6">
       <el-switch active-text="合并后" inactive-text="全部节点" v-model="view.midTreeFilterMode" @change="onFilterModeChange"></el-switch>
     </el-col>
@@ -332,7 +345,7 @@ export default {
       leftTree:[
         {"type":0,"name":"C","label":"C","path":"C:/","display":true,"leaf":false,id:'abc'},
         {"type":0,"name":"D","label":"D","path":"D:/","display":true,"leaf":false,
-          children: [{"type":1,"name":"$RECYCLE.BIN","label":"$RECYCLE.BIN","path":"D://$RECYCLE.BIN","display":true,"leaf":false},{"type":1,"name":".temp","label":".temp","path":"D://.temp","display":true,"leaf":false,children:[{"type":1,"name":"t1","label":"t1","path":"D://.temp/t1","display":true,"leaf":false}]},
+          children: [{"type":1,"name":"$RECYCLE.BIN","label":"$RECYCLE.BIN","path":"D://$RECYCLE.BIN","display":true,"leaf":false,children: [{"type":2,"name":"1.jpg","label":"1.jpg","path":"D://$RECYCLE.BIN/1.jpg","display":true,"leaf":true},{"type":2,"name":"2.jpg","label":"2.jpg","path":"D://$RECYCLE.BIN/2.jpg","display":true,"leaf":true}]},{"type":1,"name":".temp","label":".temp","path":"D://.temp","display":true,"leaf":false,children:[{"type":1,"name":"t1","label":"t1","path":"D://.temp/t1","display":true,"leaf":false}]},
             {"type":2,"name":"1.jpg","label":"1.jpg","path":"D://1.jpg","display":true,"leaf":true},
             {"type":1,"name":"Coding","label":"Coding","path":"D://Coding","display":true,"leaf":false,children: [{"type":1,"name":"Project","label":"Project","path":"D:/Coding/Project","display":true,"leaf":false},{"type":1,"name":"Refer","label":"Refer","path":"D:/Coding/Refer","display":true,"leaf":false,children:[{"type":1,"name":"v","label":"v","path":"D://Coding/Refer/v","display":true,"leaf":false,children:[{"type":1,"name":"f","label":"f","path":"D://Coding/Refer/v/f","display":true,"leaf":true}]}]},
                 {"type":1,"name":".config","label":".config","path":"D:/Coding/.config","display":true,"leaf":false,children:[
@@ -371,20 +384,36 @@ export default {
             {"type":2,"name":"3.jpg","label":"3.jpg","path":"D://3.jpg","display":true,"leaf":true},
             {"type":2,"name":"4.jpg","label":"4.jpg","path":"D://4.jpg","display":true,"leaf":true},
             {"type":2,"name":"5.jpg","label":"5.jpg","path":"D://5.jpg","display":true,"leaf":true},
-            {"type":2,"name":"6.jpg","label":"6.jpg","path":"D://6.jpg","display":true,"leaf":true}
+            {"type":2,"name":"6.jpg","label":"6.jpg","path":"D://6.jpg","display":true,"leaf":true},
+            {"type":1,"name":"xxx","label":"xxx","path":"D://xxx","display":true,"leaf":false,
+                children: [
+                  {"type":1,"name":"aaa","label":"aaa","path":"D://xxx/aaa","display":true,"leaf":false,children:[{"type":2,"name":"2.jpg","label":"2.jpg","path":"D://2.jpg","display":true,"leaf":true}]},
+                  {"type":1,"name":"bbb","label":"bbb","path":"D://xxx/bbb","display":true,"leaf":false,children:[{"type":2,"name":"3.jpg","label":"3.jpg","path":"D://3.jpg","display":true,"leaf":true}]},
+                  {"type":1,"name":"ccc","label":"ccc","path":"D://xxx/cccc","display":true,"leaf":false,children:[{"type":2,"name":"4.jpg","label":"4.jpg","path":"D://4.jpg","display":true,"leaf":true}]},
+                  {"type":1,"name":"ddd","label":"ddd","path":"D://xxx/ddd","display":true,"leaf":false,children:[{"type":2,"name":"5.jpg","label":"5.jpg","path":"D://5.jpg","display":true,"leaf":true}]},
+                ]
+            },
           ]
         }],
       rightTree:[
         {"type":0,"name":"C","label":"C","path":"C:/","display":true,"leaf":false},
         {"type":0,"name":"D","label":"D","path":"D:/","display":true,"leaf":false,expanded:true,
-          children: [{"type":1,"name":"$RECYCLE.BIN","label":"$RECYCLE.BIN","path":"D://$RECYCLE.BIN","display":true,"leaf":false},{"type":1,"name":".temp","label":".temp","path":"D://.temp","display":true,"leaf":false,children:[{"type":1,"name":"t1","label":"t1","path":"D://.temp/t1","display":true,"leaf":false,children:[{"type":1,"name":"t11","label":"t11","path":"D://.temp/t1/t11","display":true,"leaf":true},]}]},
+          children: [{"type":1,"name":"$RECYCLE.BIN","label":"$RECYCLE.BIN","path":"D://$RECYCLE.BIN","display":true,"leaf":false,children: [{"type":2,"name":"2.jpg","label":"2.jpg","path":"D://$RECYCLE.BIN/2.jpg","display":true,"leaf":true}]},{"type":1,"name":".temp","label":".temp","path":"D://.temp","display":true,"leaf":false,children:[{"type":1,"name":"t1","label":"t1","path":"D://.temp/t1","display":true,"leaf":false,children:[{"type":1,"name":"t11","label":"t11","path":"D://.temp/t1/t11","display":true,"leaf":true},]}]},
             {"type":1,"name":"Coding","label":"Coding","path":"D://Coding","display":true,"leaf":false,children: [{"type":1,"name":".config","label":".config","path":"D:/Coding/.config","display":true,"leaf":false,children: [{"name":"abc5.jpg","label":"abc5.jpg","path":"D:/Coding/.config/abc5.jpg","display":true,"leaf":true,type:2}]},{"type":1,"name":"Project","label":"Project","path":"D:/Coding/Project","display":true,"leaf":false},{"type":1,"name":"Refer","label":"Refer","path":"D:/Coding/Refer","display":true,"leaf":false,children:[{"type":1,"name":"v","label":"v","path":"D://Coding/Refer/v","display":true,"leaf":false,children:[{"type":1,"name":"f","label":"f","path":"D://Coding/Refer/v/f","display":true,"leaf":false,children:[{"type":1,"name":"h","label":"h","path":"D://Coding/Refer/v/f/h","display":true,"leaf":true}]},{"type":1,"name":"s","label":"s","path":"D://Coding/Refer/v/s","display":true,"leaf":true}]},{"type":1,"name":"t","label":"t","path":"D://Coding/Refer/t","display":true,"leaf":true}]}]},
             {"type":1,"name":"备份1","label":"备份1","path":"D://备份1","display":true,"leaf":false},
             {"type":1,"name":"Game","label":"Game","path":"D://Game","display":true,"leaf":false},{"type":1,"name":"Home","label":"Home","path":"D://Home","display":true,"leaf":false},{"type":1,"name":"Note","label":"Note","path":"D://Note","display":true,"leaf":false},{"type":1,"name":"Software","label":"Software","path":"D://Software","display":true,"leaf":false},
             {"type":1,"name":"Test","label":"Test","path":"D://Test","display":true,"leaf":false,children:[{"type":1,"name":".config","label":".config","path":"D:/Test/.config","display":true,"leaf":false},{"type":1,"name":"a","label":"a","path":"D:/Test/a","display":true,"leaf":false},{"type":1,"name":"Refer","label":"Refer","path":"D:/Test/Refer","display":true,"leaf":false}]},
             {"type":1,"name":"备份","label":"备份","path":"D://备份","display":true,"leaf":false},{"type":2,"name":"httpsbm.ruankao.org.cnsignup.txt","label":"httpsbm.ruankao.org.cnsignup.txt","path":"D://httpsbm.ruankao.org.cnsignup.txt","display":true,"leaf":true},{"type":2,"name":"Screenshot_20230201214717.jpg","label":"Screenshot_20230201214717.jpg","path":"D://Screenshot_20230201214717.jpg","display":true,"leaf":true},{"type":2,"name":"Screenshot_20230201214726.jpg","label":"Screenshot_20230201214726.jpg","path":"D://Screenshot_20230201214726.jpg","display":true,"leaf":true},{"type":2,"name":"微信图片_20220903142927.jpg","label":"微信图片_20220903142927.jpg","path":"D://微信图片_20220903142927.jpg","display":true,"leaf":true},
             {"type":2,"name":"报名照片.jpg","label":"报名照片.jpg","path":"D://报名照片.jpg","display":true,"leaf":true},
-            {"type":2,"name":"k.jpg","label":"k.jpg","path":"D://k.jpg","display":true,"leaf":true}
+            {"type":2,"name":"k.jpg","label":"k.jpg","path":"D://k.jpg","display":true,"leaf":true},
+            {"type":1,"name":"xxx","label":"xxx","path":"D://xxx","display":true,"leaf":true,
+              children: [
+                {"type":2,"name":"ccc","label":"ccc","path":"D://xxx/cccc","display":true,"leaf":true},
+                {"type":2,"name":"ddd","label":"ddd","path":"D://xxx/ddd","display":true,"leaf":true},
+                {"type":2,"name":"aaa","label":"aaa","path":"D://xxx/aaa","display":true,"leaf":true},
+                {"type":2,"name":"bbb","label":"bbb","path":"D://xxx/bbb","display":true,"leaf":true},
+              ]
+            },
           ]
         }],
       remoteTree:[],
@@ -393,12 +422,21 @@ export default {
 
       view:{
         midTreeFilterMode:false,
+        colorMode1:false,
+        colorMode2:false,
+        colorMode3:false,
+        colorMode4:false,
+        colorMode:true,
+        colorRemove:true,
+        colorExcept:true,
+        colorIfChildEdit:true,
 
         mergeConf:{
           coverModeOptions:[
             {value:'1',label:'增量同步',desc:'不影响已有文件，只传输缺失'},
             {value:'2',label:'全量同步',desc:'完全复制所有数据，删除不受控的文件'},
             {value:'3',label:'覆盖增量同步',desc:'相同文件覆盖，传输新增文件，不删除不受控的文件'},
+            {value:'4',label:'更新同步',desc:'仅仅更新相同文件，不传输新增文件，不删除不受控的文件'}
           ],
           collapse:'5'
         }
@@ -409,7 +447,8 @@ export default {
         cover:{
           exact:[
             {value:'D:/Coding/Refer',type:'2'},
-            {value:'D:/Coding/.config',type:'3'}
+            {value:'D:/Coding/.config',type:'3'},
+            {value:'D://$RECYCLE.BIN',type:'4'}
           ],
           regex:[
             {value:".*/3\\.jpg$",type:'2'},
@@ -552,6 +591,10 @@ export default {
           ...buildRegex(cover.regex.filter(i=>i.type==='3'&&i.value),({value})=>({value,mode:'regex'})),
           ...buildEqual(cover.exact.filter(i=>i.type==='3'&&i.value),({value})=>({value,mode:'exact'}))
         ],
+        update:[
+          ...buildRegex(cover.regex.filter(i=>i.type==='4'&&i.value),({value})=>({value,mode:'regex'})),
+          ...buildEqual(cover.exact.filter(i=>i.type==='4'&&i.value),({value})=>({value,mode:'exact'}))
+        ],
         except: [
           ...buildRegex(except.regex.filter(i=>i.value),rule=>({...rule,mode:'regex'})),
           ...buildEqual(except.exact.filter(i=>i.value),rule=>({...rule,mode:'exact'}))
@@ -579,7 +622,7 @@ export default {
     },
     customRules(){    //.自定义规则
       let util=this.util;
-      let {increment,cover,except,remove,incrementCover}=this.compileRules;
+      let {increment,cover,except,remove,incrementCover,update}=this.compileRules;
       let conf=(key,rules,order)=>{
         return {
           compile(left,right,pLeft,pRight,side) {
@@ -602,9 +645,10 @@ export default {
       return [
           conf('except',except,100),                                                   //例外
           conf('remove',remove,101),                                                //删除
-          conf('cover',cover,102),                                                       //全量
+          conf('update',update,102),                                                 //更新
           conf('increment',increment,103),                                       //增量
           conf('incrementCover',incrementCover,104),                    //增量覆盖
+          conf('cover',cover,105),                                                       //全量
       ];
     },
     rules() { //.固有规则
@@ -671,9 +715,20 @@ export default {
     this.midTree=midTree.children;
     console.log(midTree);
 
+    console.log('==');
+
+    this.$nextTick(()=>{
+      let left=this.visibleNode(this.$refs.leftTreeBox,this.$refs.leftTree);
+      let mid=this.visibleNode(this.$refs.midTreeBox,this.$refs.midTree);
+      let right=this.visibleNode(this.$refs.rightTreeBox,this.$refs.rightTree);
+
+      console.log(this.buildDrawStructs(left,mid,this.difference.left));
+    });
+
+
 
     let leaf = treeLeaf('2.7.12.13', '.', diffs.left.add, 'children', 'value');
-    console.log(leaf);
+    //console.log(leaf);
     //this.read();
     /*window.files.onFileStructReply(function(struct){
       _this.remoteResolve(_this.resolveNode(struct));
@@ -818,12 +873,487 @@ export default {
 
       return true;
     },
-    coloring(){
+    coloring(struct){
+      let starts=struct.filter(i=>!i.pre&&i.type);
+
+      let canvas=this.$refs.canvas;
+      let ctx=canvas.getContext('2d');
+      let parent=canvas.parentElement;
+      canvas.width=parent.clientWidth;
+      canvas.height=parent.clientHeight;
+      ctx.clearRect(0, 0, parent.clientWidth, parent.clientHeight);
+      //ctx.lineWidth=1;
+      let leftTree=this.$refs.leftTree;
+      let midTree=this.$refs.midTree;
+
+      let radius=35;
+      let borderBottomStyle='3px solid ';
+      let addFill=this.styles.node.add.fill;
+
+      let color={
+        updated:['rgba(223,163,114,0.57)','rgba(174,119,73,0.71)','rgba(134,79,37,0.72)'],
+        increment:['rgba(163,223,114,0.76)','rgba(85,174,73,0.74)','rgba(60,134,37,0.67)'],
+        incrementCover:['rgba(114,223,201,0.8)','rgba(73,174,164,0.86)','rgba(37,134,129,0.76)'],
+        cover:['rgba(114,149,223,0.64)','rgba(73,105,174,0.73)','rgba(37,68,134,0.74)'],
+        except:['rgba(223,214,114,0.69)','rgba(174,150,73,0.78)','rgba(134,90,37,0.7)'],
+        remove:['rgba(223,114,114,0.6)','rgba(174,73,73,0.7)','rgba(134,37,37,0.76)'],
+      }
+
+      let idx=0;
+      for(let i of starts){
+          let j =i;
+          let height=1;
+          while(j.next)height++;
+
+          //bundle.levelChange?++idx:(idx=0);
+          let index=idx%addFill.length;
+          let style=color[i.type][index];                                                                //循环取色值
+
+          ctx.strokeStyle=style;
+          ctx.fillStyle=style;
+
+          let left1={x:-1,y:bundle.y};                                                                    //-1延申到不可视区域 防止最后闭合曲线导致留下边框
+          let left2={x:-1,y:bundle.y+bundle.node.length*this.treeItemHeight};
+          let right1={x:parent.clientWidth,y:value.right.y+this.treeItemHeight};
+
+          ctx.beginPath();
+          ctx.moveTo(left1.x, left1.y);
+          ctx.bezierCurveTo(left1.x+radius,left1.y,right1.x-radius,right1.y,right1.x,right1.y-2);
+          ctx.bezierCurveTo(right1.x-radius,right1.y,left2.x+radius+10,left2.y,left2.x,left2.y);
+          ctx.closePath();
+          ctx.stroke();
+          ctx.fill();
 
 
+
+
+      }
     },
-    visibleNode(){
+    buildDrawStructs(leftTree,midTree,leftDiff){
 
+     /* let map={__first:null};
+
+      let stack=[],pointer=-1;
+      let level=0;
+
+      let find=(node,key)=>treeLeaf(node.bsid,'.',leftDiff[key],'children','value');
+      let is=leaf=>leaf&&leaf.type<3;
+
+      let curNode;
+      let link=(id,bsid,rule,y,level,type)=>{
+
+        if(!curNode)
+          curNode=map[id]={[type]:{y,id,rule,level}};
+        else
+          curNode.next=map[id]={pre:curNode,[type]:{y,rule,id,level}};
+
+        let bsids=bsid.split('.');
+        if(bsids.length<2)return;
+        for(let idx=0;idx<bsids.length-1;++idx){
+          let b=bsids[idx];
+          let o=map[b];
+          if(!o){
+            o=map[b]={link:[]};
+          }
+          if(!o.link)o.link=[];
+          o.link.push(id);
+        }
+      }
+
+
+      for (let node of midTree) {
+        let item = node.data.left;
+        if (!item) continue;
+        let id=item.id;
+        let bsid=item.bsid;
+
+        //.node类型
+        let except = find(item, 'except');
+        let remove = find(item, 'remove');
+        let update = find(item, 'update');
+        let increment = find(item, 'increment');
+        let incrementCover = find(item, 'incrementCover');
+        let cover = find(item, 'cover');
+        let rule;
+        if (is(except)) rule = 'except';
+        else if (is(remove)) rule = 'remove';
+
+        let pre = stack[pointer];
+        let preRule = pre ? pre.rule : null;
+
+        if (!rule && (!preRule || (preRule !== 'except' && preRule !== 'remove'))) {
+          if (is(update)) rule = 'update';
+          else if (is(increment)) rule = 'increment';
+          else if (is(incrementCover)) rule = 'incrementCover';
+          else if (is(cover)) rule = 'cover';
+        }
+
+        if(rule){
+          if(!pre){
+            level=node.level;
+            stack[++pointer]={level:node.level,rule};
+            link(id,bsid,rule,node.y,node.level,'right');
+          }
+          else{
+            if(node.level>=pre.level){
+              if(level>node.level){
+                curNode=null;
+              }
+              link(id,bsid,rule,node.y,node.level,'right');
+              level=node.level;
+            }else{
+              let p=pointer
+              while(pointer>0&&stack[p].level>node.level){
+                --pointer;
+              }
+              stack[++pointer]={level:node.level,rule};
+              link(id,bsid,rule,node.y,node.level,'right');
+            }
+          }
+        }else{
+          if(!pre){
+
+          }
+          else{
+            if(node.level<pre.level){
+              let p=pointer
+              while(pointer>0&&stack[p].level>node.level){
+                --pointer;
+              }
+              link(id,bsid,preRule,node.y,node.level,'right');
+            }else{
+              link(id,bsid,preRule,node.y,node.level,'right');
+            }
+          }
+        }
+      }
+
+
+      stack=[];
+      pointer=-1;
+      level=0;
+      for(let item of leftTree){
+
+      }
+
+      return map;*/
+
+      //. {left:{start,end},right:{start,end}}
+
+  
+      
+      let map={},curNode;
+      let stack = [], pointer = -1;                  //覆盖规则栈
+      let level = 0;                                      //相同规则匹配到的最后节点层级
+      let side='right';
+
+      let find=(node,key)=>treeLeaf(node.bsid,'.',leftDiff[key],'children','value');
+      let is=leaf=>leaf&&leaf.type<3;
+      let parents=(id,bsid)=>{
+        let bsids=bsid.split('.');
+        if(bsids.length<2)return;
+        for(let idx=0;idx<bsids.length-1;++idx){
+          let b=bsids[idx];
+          let o=map[b];
+          if(!o){
+            o=map[b]={link:[]};
+          }
+          if(!o.link)o.link=[];
+          o.link.push(id);
+        }
+      }
+      let link=(linkLast)=>{
+        return linkLast?
+            (id,bsid,rule,y,level,side,render=true)=>{
+              let o=map[id];
+              o=o||{};
+              o[side]={y,rule,id,level,render};
+              o.pre=curNode;
+              o.rule=rule;
+              if(curNode)curNode.next=o;
+              curNode=o;
+              map[id]=o;
+              if(render) parents(id,bsid);
+            }:
+            (id,bsid,rule,y,level,side,render=true)=>{
+              curNode=map[id]={[side]:{y,id,rule,level,render}};
+              curNode.rule=rule;
+              if(render) parents(id,bsid);
+            };
+      }
+      
+      for (let item of midTree) {
+        let node=item.data.left;
+        if (!node) continue;
+
+        let except = find(node, 'except');
+        let remove = find(node, 'remove');
+        let update = find(node, 'update');
+        let increment = find(node, 'increment');
+        let incrementCover = find(node, 'incrementCover');
+        let cover = find(node, 'cover');
+        let rule;
+        if (is(except)) rule = 'except';
+        else if (is(remove)) rule = 'remove';
+
+        let pre = stack[pointer];
+        let preRule = pre ? pre.rule : null;
+
+        if (!rule && (!preRule || (preRule !== 'except' && preRule !== 'remove'))) {
+          if (is(update)) rule = 'update';
+          else if (is(increment)) rule = 'increment';
+          else if (is(incrementCover)) rule = 'incrementCover';
+          else if (is(cover)) rule = 'cover';
+        }
+
+
+        if (rule) {                                                                                                   //匹配到规则
+          if (preRule) {
+            if (rule === preRule) {                                                                       //当前节点规则与最后一个覆盖规则相同
+              if(pre.level>item.level){                                                                   //当前节点规则超出父节点规则
+                while (pointer > 0 && stack[pointer].level >= item.level) {
+                  --pointer;
+                }
+                level=item.level;
+                stack[++pointer]={level:item.level,rule};
+                link(true)(node.id,node.bsid,rule,item.y,item.level,side);
+              }else{
+                if (level > item.level) {                                                                  //相同规则但层级超过最后节点层级
+                  level=item.level;
+                  link(true)(node.id,node.bsid,rule,item.y,item.level,side);
+                }
+                else {                                                                                               //继续下探
+                  level=item.level;
+                  link(false)(node.id,node.bsid,rule,item.y,item.level,side);
+                }
+              }
+            } else {                                                                                                 //新规则节点
+              if(pre.level>item.level){                                                                   //新规则节点超出父节点规则
+                while (pointer > 0 && stack[pointer].level >= item.level) {
+                  --pointer;
+                }
+                level=item.level;
+                stack[++pointer]={level:item.level,rule};
+                link(true)(node.id,node.bsid,rule,item.y,item.level,side);
+              }
+              else{                                                                                                   //新规则节点层级在父节点下
+                level=item.level;
+                stack[++pointer]={level:item.level,rule};
+                link(true)(node.id,node.bsid,rule,item.y,item.level,side);
+              }
+            }
+          } else {                                                                                                  //无前节点规则
+            level=item.level;
+            stack[++pointer]={rule,level:item.level};
+            link(true)(node.id,node.bsid,rule,item.y,item.level,side);
+          }
+        } else if (pointer > 0) {
+          if(pre.level>item.level){
+            while (pointer > 0 && stack[pointer].level >item.level) {              //.保留最后一个规则（相同层级）
+              --pointer;
+            }
+            if(pointer>0){                                                                                  //有父规则
+              link(true)(node.id,node.bsid,stack[pointer].rule,item.y,item.level,side);
+              level=item.level;
+            }else{
+              link(true)(node.id,node.bsid,null,item.y,item.level,side,false)                                                                //.仅挂载 不绘制;
+              level=item.level;
+            }
+          }
+          else{                                                                                                       //有父规则-继承
+            link(true)(node.id,node.bsid,stack[pointer].rule,item.y,item.level,side);
+            level=item.level;
+          }
+        } else {
+          link(true)(node.id,node.bsid,rule,item.y,item.level,side,false)                                                                //.仅挂载 不绘制;
+          level=item.level;
+        }
+      }
+
+      curNode=null;
+      stack = [], pointer = -1;                  //覆盖规则栈
+      level = 0;                                      //相同规则匹配到的最后节点层级
+      side='left';
+      find=()=>{};
+      let unLink=(node)=>{
+        curNode=node;
+        if(node.pre)node.pre.next=null;
+        node.pre=null;
+      }
+      let relate=(node,side,y)=>{
+        if(node.link){
+          for(let i of node.link){
+            if(!map[i][side]){
+              map[i][side]={y};
+              continue;
+            }
+            if(map[i][side].y===null||map[i][side].y===undefined){
+              map[i][side].y=y;
+              continue;
+            }
+            let _y=map[i][side].y;
+            if(y>_y)map[i][side].y=y;
+          }
+        }
+
+      }
+
+
+      for(let item of leftTree){
+
+        let except = find(item, 'except');
+        let remove = find(item, 'remove');
+        let update = find(item, 'update');
+        let increment = find(item, 'increment');
+        let incrementCover = find(item, 'incrementCover');
+        let cover = find(item, 'cover');
+        let rule;
+        if (is(except)) rule = 'except';
+        else if (is(remove)) rule = 'remove';
+
+        let pre = stack[pointer];
+        let preRule = pre ? pre.rule : null;
+
+        if (!rule && (!preRule || (preRule !== 'except' && preRule !== 'remove'))) {
+          if (is(update)) rule = 'update';
+          else if (is(increment)) rule = 'increment';
+          else if (is(incrementCover)) rule = 'incrementCover';
+          else if (is(cover)) rule = 'cover';
+        }
+
+        let node=map[item.id];
+
+        if (rule) {                                                                                                   //匹配到规则
+          if (preRule) {
+            if (rule === preRule) {                                                                       //当前节点规则与最后一个覆盖规则相同
+              if(pre.level>item.level){                                                                   //当前节点规则超出父节点规则
+                while (pointer > 0 && stack[pointer].level >= item.level) {
+                  --pointer;
+                }
+                level=item.level;
+                stack[++pointer]={level:item.level,rule};
+
+                if(node){
+                  unLink(node);
+                  relate(node,side,item.y);
+                }else{
+                  link(true)(item.id,item.bsid,rule,item.y,item.level,side);
+                }
+              }else{
+                if (level > item.level) {                                                                  //相同规则但层级超过最后节点层级
+                  level=item.level;
+                  if(node){
+                    unLink(node);
+                    relate(node,side,item.y);
+                  }else {
+                    link(true)(item.id, item.bsid, rule, item.y, item.level, side);
+                  }
+                }
+                else {                                                                                               //继续下探
+                  level=item.level;
+                  link(false)(item.id,item.bsid,rule,item.y,item.level,side);
+                }
+              }
+            } else {                                                                                                 //新规则节点
+              if(pre.level>item.level){                                                                   //新规则节点超出父节点规则
+                while (pointer > 0 && stack[pointer].level >= item.level) {
+                  --pointer;
+                }
+                level=item.level;
+                stack[++pointer]={level:item.level,rule};
+                if(node){
+                  unLink(node);
+                  relate(node,side,item.y);
+                }else {
+                  link(true)(item.id, item.bsid, rule, item.y, item.level, side);
+                }
+              }
+              else{                                                                                                   //新规则节点层级在父节点下
+                level=item.level;
+                stack[++pointer]={level:item.level,rule};
+                if(node){
+                  unLink(node);
+                  relate(node,side,item.y);
+                }else {
+                  link(true)(item.id, item.bsid, rule, item.y, item.level, side);
+                }
+              }
+            }
+          } else {                                                                                                  //无前节点规则
+            level=item.level;
+            stack[++pointer]={rule,level:item.level};
+            if(node){
+              unLink(node);
+              relate(node,side,item.y);
+            }else {
+              link(true)(item.id, item.bsid, rule, item.y, item.level, side);
+            }
+          }
+        } else if (pointer > 0) {
+          if(pre.level>item.level){
+            while (pointer > 0 && stack[pointer].level >item.level) {              //.保留最后一个规则（相同层级）
+              --pointer;
+            }
+            if(pointer>0){                                                                                  //有父规则
+              if(node){
+                unLink(node);
+                relate(node,side,item.y);
+              }else {
+                link(true)(item.id, item.bsid, stack[pointer].rule, item.y, item.level, side);
+              }
+              level=item.level;
+            }else{
+              if(node){
+                unLink(node);
+                relate(node,side,item.y);
+              }else {
+                link(true)(item.id, item.bsid, null, item.y, item.level, side, false)                                                                //.仅挂载 不绘制;
+              }
+              level=item.level;
+            }
+          }
+          else{                                                                                                       //有父规则-继承
+            if(node){
+              unLink(node);
+              relate(node,side,item.y);
+            }else {
+              link(true)(item.id, item.bsid, stack[pointer].rule, item.y, item.level, side);
+            }
+            level=item.level;
+          }
+        } else {
+          if(node){
+            unLink(node);
+            relate(node,side,item.y);
+          }else {
+            link(true)(item.id, item.bsid, rule, item.y, item.level, side, false)                                                                //.仅挂载 不绘制;
+          }
+          level=item.level;
+        }
+      }
+
+      return map;
+    },
+    visibleNode(treeBoxRef,treeRef){
+      let start=Math.floor(treeBoxRef.scrollTop/this.treeItemHeight)-1;       //可视起始项坐标
+      start=start<0?0:start;
+      let origin=start*this.treeItemHeight-treeBoxRef.scrollTop;                         //绘图起始点作为绘图坐标原点y （滚动节点一半情况）
+      return $(treeBoxRef)
+          .find(".diff-node:visible")
+          .toArray()
+          .splice(start,this.viewPortNodes)
+          .map((n,idx)=>{
+            let node=treeRef.getNode(n.dataset.nodeId);
+            return {
+              node,
+              data:node.data,
+              bsid: node.data.bsid,
+              e: n,
+              y: origin + this.treeItemHeight * idx,    //起始y
+              id: node.id,
+              level: node.level
+            }
+          });
     },
     //, 构建合并树
     //[except],[remove]
@@ -836,13 +1366,13 @@ export default {
               if(pVal.children){
                 let nodes=pVal.children.filter(i=>i.path===path);
                 if(nodes.length>0){
-                  nodes[0][from]={path,bsid,type,name,id}
+                  nodes[0][from]={path,bsid,type,name,id,arr:bsid.split('.')}
                   return nodes[0];
                 }
               }else{
                 pVal.children=[];
               }
-              let child={from,path,bsid,type,label,name,display,[from]:{path,bsid,type,name,id}};
+              let child={from,path,bsid,type,label,name,display,[from]:{path,bsid,type,name,id,arr:bsid.split('.')}};
               pVal.children.push(child);
               return child;
             },
@@ -898,6 +1428,10 @@ export default {
         let subRules={left:new Set(parentRules.left),right:new Set(parentRules.right)};  //子节点覆盖的规则
         let right = entry[1];
         //. 右节点构建父节点传递子节点规则
+        for(let rule of parentRules.right){
+          rule.compile(leftMap[entry[0]],right,leftNode,rightNode,'right').buildChild(diffs.right);
+        }
+        //. 右节点构建父节点传递子节点规则
         for(let ruleBuilder of rules){
           let rule=ruleBuilder.compile(leftMap[entry[0]],right,leftNode,rightNode,'right');
           if(!rule.match)continue;
@@ -921,139 +1455,6 @@ export default {
       }
 
       return curRules;
-
-
-
-      /*let leftMap = leftNode?list2map(leftNode.children,'path'):{};
-      let rightMap = rightNode?list2map(rightNode.children,'path'):{};
-      let curRules={left:new Set(),right:new Set()};
-      for(let entry of Object.entries(leftMap)) {
-        let path = entry[0];
-        let left = entry[1];
-        let right=rightMap[path];
-        let subRules={left:new Set(parentRules.left),right:new Set(parentRules.right)};  //子节点覆盖的规则
-        //. 左节点构建父节点传递子节点规则
-        for(let rule of parentRules.left){
-          rule.compile(left,right,leftNode,rightNode,'left').buildChild(diffs.left);
-        }
-        //. 左节点构建自身匹配规则
-        for(let ruleBuilder of rules){
-          let rule=ruleBuilder.compile(left,right,leftNode,rightNode,'left');
-          if(!rule.match)continue;
-
-          rule.build(diffs.left);
-
-          if(rule.child){
-              subRules.left.add(ruleBuilder);
-          }
-          if(rule.parent){
-            curRules.left.add(ruleBuilder);
-          }
-        }
-        let matchSubRules=this.findDiff(diffs,left,right,leftNode,rightNode,rules, subRules);//. 遍历所有左新增，共同节点
-        matchSubRules.left.forEach(s=>{
-          s.compile(leftNode,rightNode,pLeftNode,pRightNode,'left').buildParent(diffs.left);
-          curRules.left.add(s)
-        });
-        matchSubRules.right.forEach(s=>{
-          s.compile(leftNode,rightNode,pLeftNode,pRightNode,'right').buildParent(diffs.right);
-          curRules.right.add(s)
-        });
-      }
-
-      for(let entry of Object.entries(rightMap)) {
-        let subRules={left:new Set(parentRules.left),right:new Set(parentRules.right)};  //子节点覆盖的规则
-        let right = entry[1];
-        //. 右节点构建父节点传递子节点规则
-        for(let ruleBuilder of rules){
-          let rule=ruleBuilder.compile(leftMap[entry[0]],right,leftNode,rightNode,'right');
-          if(!rule.match)continue;
-
-          rule.build(diffs.right);
-
-          if(rule.child){//右新增节点
-            subRules.right.add(ruleBuilder);
-          }
-          if(rule.parent){
-            curRules.right.add(ruleBuilder);
-          }
-        }
-        if(!leftMap[entry[0]]){//. 遍历右新增节点
-          let matchSubRules=this.findDiff(diffs,null,right,leftNode,rightNode,rules, subRules);
-          matchSubRules.right.forEach(s=>{
-            s.compile(leftNode,rightNode,pLeftNode,pRightNode,'right').buildParent(diffs.right);
-            curRules.right.add(s)
-          });
-        }
-      }
-
-      return curRules;*/
-
-
-      /*let leftMap = list2map(leftNode.children,'path');
-      let rightMap = list2map(rightNode.children,'path');
-      let curRules={left:new Set(),right:new Set()};
-      for(let entry of Object.entries(leftMap)) {
-        let path = entry[0];
-        let left = entry[1];
-        let right=rightMap[path];
-        let subRules={left:new Set(parentRules.left),right:new Set(parentRules.right)};  //子节点覆盖的规则
-        //. 左节点构建父节点传递子节点规则
-        for(let rule of parentRules.left){
-          rule.compile(left,right,leftNode,rightNode,'left').buildChild(diffs.left);
-        }
-        //. 左节点构建自身匹配规则
-        for(let ruleBuilder of rules){
-          let rule=ruleBuilder.compile(left,right,leftNode,rightNode,'left');
-          if(!rule.match)continue;
-
-          rule.build(diffs.left);
-
-          if(rule.child){
-            if(right){
-              subRules.left.add(ruleBuilder);
-            }else {
-              recursiveTree(left, 'children', (node, pNode) => pNode && ruleBuilder.compile(node, null, pNode, null, 'left').buildChild(diffs.left));
-            }
-          }
-          if(rule.parent){
-            curRules.left.add(ruleBuilder);
-          }
-        }
-        if(right){
-          let matchSubRules=this.findDiff(diffs,left,right,leftNode,rightNode,rules, subRules);
-          matchSubRules.left.forEach(s=>{
-            s.compile(leftNode,rightNode,pLeftNode,pRightNode,'left').buildParent(diffs.left);
-            curRules.left.add(s)
-          });
-          matchSubRules.right.forEach(s=>{
-            s.compile(leftNode,rightNode,pLeftNode,pRightNode,'right').buildParent(diffs.right);
-            curRules.right.add(s)
-          });
-        }
-      }
-
-      for(let entry of Object.entries(rightMap)) {
-        //if(leftMap[entry[0]])continue;
-        let right = entry[1];
-        //. 右节点构建父节点传递子节点规则
-        for(let ruleBuilder of rules){
-          let rule=ruleBuilder.compile(leftMap[entry[0]],right,leftNode,rightNode,'right');
-          if(!rule.match)continue;
-
-          rule.build(diffs.right);
-
-          if(rule.child){//右新增节点
-            recursiveTree(right,'children',(node,pNode)=>pNode&&ruleBuilder.compile(null,node,null,pNode,'right').buildChild(diffs.right));
-          }
-
-          if(rule.parent){
-            curRules.right.add(ruleBuilder);
-          }
-        }
-      }
-
-      return curRules;*/
     },
 
     //%v1

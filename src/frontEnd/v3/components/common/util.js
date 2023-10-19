@@ -1,6 +1,29 @@
 //` list转map
-function list2map(list,key){
-    return list?list.reduce((o,n)=>({...o,[n[key]]:n}),{}):{};
+function list2map(list,...keys){
+    return list?list.reduce((o,n)=>{
+        let a=n;
+        for(let k of keys){
+            a=a[k];
+        }
+        return {...o,[a]:n};
+        //return {...o,[n[key]]:n};
+    },{}):{};
+}
+
+
+function findLastParent(bsid,separator,map,childKey,valueKey){
+    let keys=bsid.split(separator);
+    if(!map)return null;
+    let sub=map;
+    let last=null;
+    for(let key of keys){
+        if(!sub[key]){
+            return valueKey?last[valueKey]:last;
+        }
+        last=sub[key];
+        sub=childKey?sub[key][childKey]:sub[key];
+    }
+    return valueKey?last[valueKey]:last;
 }
 
 //` 遍历树
@@ -10,6 +33,17 @@ function recursiveTree(node,key,func,pNode,pVal){
     node[key].map(n => {
         recursiveTree(n, key,func,node,curVal);
     });
+}
+
+function recursiveTreeMap(map,childKey,func,pEntry,pVal){
+    for(let entry of Object.entries(map)){
+        let key=entry[0];
+        let value=entry[1];
+        let curVal=func(key,value,pEntry,pVal);
+        if(map[childKey]){
+            recursiveTreeMap(map[childKey],childKey,func,entry,curVal);
+        }
+    }
 }
 
 //` 树形map
@@ -41,6 +75,7 @@ function treeMap(bsid,value,separator,map,childKey,valueKey){
 
 //` 获得树形map叶子节点
 function treeLeaf(bsid,separator,map,childKey,valueKey){
+    if(!map)return null;
     let keys=bsid.split(separator);
     let o=map;
     let finalNode;
@@ -67,6 +102,8 @@ function elTreeParent(node,func){
 
 
 export {
+    findLastParent,
+    recursiveTreeMap,
     elTreeParent,
     treeLeaf,
     treeMap,

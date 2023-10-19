@@ -21,6 +21,7 @@
     "deep-object-diff": "^1.1.9",
     "element-plus": "^2.2.34",
     "jquery": "^3.7.0",
+    "jszip": "^3.10.1",
     "node-turn": "^0.0.6",
     "vue": "^3.2.13",
     "wrtc": "^0.4.7",
