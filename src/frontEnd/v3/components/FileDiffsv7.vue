@@ -1,12 +1,12 @@
 <template>
-  <el-row>
+<!--  <el-row>
     <el-col :span="1"><el-input placeholder="start" v-model="start"></el-input></el-col>
     <el-col :span="1"><el-input placeholder="end" v-model="end"></el-input></el-col>
     <el-col :span="1"><el-button @click="stoke">stoke</el-button></el-col>
-  </el-row>
-<!--  <el-switch active-text="合并后" inactive-text="全部节点"
-             v-model="view.controlPanel.midFilterMode"
-             @change="onMidFilterChange"></el-switch>-->
+  </el-row>-->
+  <el-switch active-text="合并后" inactive-text="全部节点"  v-model="view.controlPanel.midFilterMode" @change="onMidFilterChange"></el-switch>
+  &nbsp;
+  <el-switch active-text="收敛" inactive-text="发散"  v-model="view.controlPanel.convergence" @change="onMidBoxScroll"></el-switch>
   <el-row>
     <el-col :span="7">
       <el-scrollbar :height="view.boxHeight" @scroll="onLeftBoxScroll" class="box left-scroll" ref="leftTreeBox">
@@ -70,7 +70,8 @@ export default {
         boxHeight: 600,
         treeItemHeight:26,
         controlPanel:{
-          midFilterMode:false
+          midFilterMode:false,
+          convergence:false
         },
         styles:{
           increment: {base:'rgba(187,249,162)',list:['rgba(187,249,162,0.42)'],stroke:'#94d27b'},
@@ -306,7 +307,7 @@ export default {
       let leftNodes=this.findBoxVisibleNode(this.$refs.leftTreeBox,this.$refs.leftTree);
       let midNodes=this.findBoxVisibleNode(this.$refs.midTreeBox,this.$refs.midTree);
 
-      let canvasConf=new DrawConf(parent.clientWidth,this.view.treeItemHeight)
+      let canvasConf=new DrawConf(parent.clientWidth,this.view.treeItemHeight,this.view.controlPanel.convergence)
           .base(leftNodes,undefined,undefined,true)
           .compared(midNodes,'left','left');
       let s1=this.buildDrawStruct(canvasConf);
@@ -323,7 +324,7 @@ export default {
       let midNodes=this.findBoxVisibleNode(this.$refs.midTreeBox,this.$refs.midTree);
       let rightNodes=this.findBoxVisibleNode(this.$refs.rightTreeBox,this.$refs.rightTree);
 
-      let canvasConf=new DrawConf(parent.clientWidth,this.view.treeItemHeight)
+      let canvasConf=new DrawConf(parent.clientWidth,this.view.treeItemHeight,this.view.controlPanel.convergence)
           .base(midNodes,'left','right')
           .compared(rightNodes,undefined,undefined,true);
       let s2=this.buildDrawStruct(canvasConf);
@@ -578,9 +579,10 @@ export default {
 
 //% 绘制设置
 class DrawConf{
-  constructor(canvasWidth, listItemHeight) {
+  constructor(canvasWidth, listItemHeight,convergence) {
     this.canvasWidth=canvasWidth;                                                                    //, 画布宽度
     this.listItemHeight=listItemHeight;                                                                //, 列表高度
+    this.convergence=convergence;                                                                    //, 一对多时是否收敛
   }
 
   base(baseMap,baseKey,baseMappingKey,source=false){
@@ -600,11 +602,11 @@ class DrawConf{
   }
 
   structBuilder() {
-    return new StructBuilder(this.comparedMap, this.comparedMappingId, this.baseKey, this.baseMappingKey,this.canvasWidth, this.listItemHeight, false);
+    return new StructBuilder(this.comparedMap, this.comparedMappingId, this.baseKey, this.baseMappingKey,this.canvasWidth, this.listItemHeight, false,this.convergence);
   }
 
   reversedBuilder(){
-    return new StructBuilder(this.baseMap, this.sourceMappingId, this.comparedKey, this.comparedMappingKey,this.canvasWidth, this.listItemHeight, true);
+    return new StructBuilder(this.baseMap, this.sourceMappingId, this.comparedKey, this.comparedMappingKey,this.canvasWidth, this.listItemHeight, true,this.convergence);
   }
 }
 
@@ -612,7 +614,7 @@ class DrawConf{
 class Struct{
   static DRAW_TRIANGLE = 1;                            //三角形
   static DRAW_RECTANGLE = 2;                         //矩形
-  constructor(ruleItem,treeRuleItem,mode,level,y1,y2,height,width,key,reversed=false) {
+  constructor(ruleItem,treeRuleItem,mode,level,y1,y2,height,width,key,reversed=false,convergence=false) {
     this.ruleItem=ruleItem;                                 //, 着色规则
     this.treeRuleItem=treeRuleItem;                   //, 映射规则 表明是原树结构（normal），或者映射到其他树（mapping），normal作为一种特殊的映射
     this.mode=mode;                                         //, 实际着色类型!=this.ruleItem.config.mode（合并树时，例如左树increment,而右树已有节点，左规则生效为increment,而实际合并生效的规则为normal）
@@ -628,6 +630,7 @@ class Struct{
     this.points=[];                                               //, 绘点
     this.source=[];                                              //, base 集合
     this.target=[];                                               //, compared 集合
+    this.convergence=convergence;                   //, 一对多时是否收敛
   }
 
   //.封闭图形绘点
@@ -635,25 +638,28 @@ class Struct{
     if (this.type === Struct.DRAW_RECTANGLE) {
       let leftY=this.reversed?this.y2:this.y1;                //,左边起始y坐标
       let rightY=this.reversed?this.y1:this.y2;              //,右边起始y坐标
-      //,多对一收敛
-      /*let source=this.source.map((x,idx)=>({data:x.node.data.style===this.mode?x:null,idx})).filter(x=>x.data);
-      let target=this.target.map((x,idx)=>({data:x.node.data.style===this.mode?x:null,idx})).filter(x=>x.data);
-      let leftList=this.reversed?target:source;
-      let rightList=this.reversed?source:target;
 
-      let offsetLeft1=leftList.length<=0?0:leftList[0].idx*this.height;
-      let offsetLeft2=leftList.length<=0?0:leftList[leftList.length-1].idx*this.height;
-      let offsetRight1=rightList.length<=0?0:rightList[0].idx*this.height;
-      let offsetRight2=rightList.length<=0?0:rightList[rightList.length-1].idx*this.height;
+      if(this.convergence){                                          //,多对一收敛
+        let source=this.source.map((x,idx)=>({data:x.node.data.style===this.mode?x:null,idx})).filter(x=>x.data);
+        let target=this.target.map((x,idx)=>({data:x.node.data.style===this.mode?x:null,idx})).filter(x=>x.data);
+        let leftList=this.reversed?target:source;
+        let rightList=this.reversed?source:target;
 
-      this.point(0, leftY+offsetLeft1);
-      this.point(this.width, rightY+offsetRight1);
-      this.point(this.width, rightY +offsetRight2+this.height);
-      this.point(0, leftY + offsetLeft2+this.height);*/
-      this.point(0, leftY);
-      this.point(this.width, rightY);
-      this.point(this.width, rightY + this.cp * this.height);
-      this.point(0, leftY + this.bp * this.height);
+        let offsetLeft1=leftList.length<=0?0:leftList[0].idx*this.height;
+        let offsetLeft2=leftList.length<=0?0:leftList[leftList.length-1].idx*this.height;
+        let offsetRight1=rightList.length<=0?0:rightList[0].idx*this.height;
+        let offsetRight2=rightList.length<=0?0:rightList[rightList.length-1].idx*this.height;
+
+        this.point(0, leftY+offsetLeft1);
+        this.point(this.width, rightY+offsetRight1);
+        this.point(this.width, rightY +offsetRight2+this.height);
+        this.point(0, leftY + offsetLeft2+this.height);
+      }else{
+        this.point(0, leftY);
+        this.point(this.width, rightY);
+        this.point(this.width, rightY + this.cp * this.height);
+        this.point(0, leftY + this.bp * this.height);
+      }
     } else if (this.type === Struct.DRAW_TRIANGLE) {
       let startX=this.reversed?this.width:0;              //,reversed=true->则从右边画起，否则左边
       let endX=this.reversed?0:this.width;
@@ -721,7 +727,7 @@ class Struct{
 
 //% 色块结构构造器
 class StructBuilder {
-  constructor(comparedMap, mappingId, key,mappingKey, width, height, reversed) {
+  constructor(comparedMap, mappingId, key,mappingKey, width, height, reversed,convergence) {
     this.comparedMap = comparedMap;                                                            //, 比较的集合
     this.mappingId = mappingId;                                                                       //, nodes集获取的键名[source,target]
     this.key = key;                                                                                              //, 获取的规则组名
@@ -731,6 +737,7 @@ class StructBuilder {
     this.sets = new Set();                                                                                    //,已匹配到的compared节点
     this.reversed = reversed;                                                                               //,绘图结构镜像
     this.structs = [];                                                                                             //, 绘图结构（映射一对多时多项）
+    this.convergence=convergence;                                                                    //, 一对多时是否收敛
   }
 
   //. 初始化列表项
@@ -761,7 +768,7 @@ class StructBuilder {
               base.level,
               baseItem.y,
               compared?compared.y:pCompared.y,
-              this.height,this.width,this.key,this.reversed)
+              this.height,this.width,this.key,this.reversed,this.convergence)
               .pair(baseItem,compared);
             compared?
                 struct.rectangle(compared?.idx):
