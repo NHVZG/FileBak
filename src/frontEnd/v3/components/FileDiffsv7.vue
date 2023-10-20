@@ -307,8 +307,8 @@ export default {
       let midNodes=this.findBoxVisibleNode(this.$refs.midTreeBox,this.$refs.midTree);
 
       let canvasConf=new DrawConf(parent.clientWidth,this.view.treeItemHeight)
-          .base(leftNodes,undefined,true)
-          .compared(midNodes,'left');
+          .base(leftNodes,undefined,undefined,true)
+          .compared(midNodes,'left','left');
       let s1=this.buildDrawStruct(canvasConf);
       this.drawCanvas(canvas,s1.structs1);
       this.drawCanvas(canvas,s1.structs2);
@@ -324,8 +324,8 @@ export default {
       let rightNodes=this.findBoxVisibleNode(this.$refs.rightTreeBox,this.$refs.rightTree);
 
       let canvasConf=new DrawConf(parent.clientWidth,this.view.treeItemHeight)
-          .base(midNodes,'right')
-          .compared(rightNodes,undefined,true);
+          .base(midNodes,'left','right')
+          .compared(rightNodes,undefined,undefined,true);
       let s2=this.buildDrawStruct(canvasConf);
       this.drawCanvas(canvas,s2.structs1);
       this.drawCanvas(canvas,s2.structs2);
@@ -583,26 +583,28 @@ class DrawConf{
     this.listItemHeight=listItemHeight;                                                                //, 列表高度
   }
 
-  base(baseMap,baseKey,source=false){
+  base(baseMap,baseKey,baseMappingKey,source=false){
     this.baseMap=baseMap;                                                                               //, 优先遍历节点集
-    this.baseKey=baseKey;                                                                                  //, 优先遍历节点规则组名
+    this.baseKey=baseKey;                                                                                  //, 优先遍历节点着色规则组名（生效规则只用left）
+    this.baseMappingKey=baseMappingKey;                                                      //, 优先遍历节点映射规则组名（合并树，节点来源需用left,right）
     this.comparedMappingId=source?'target':'source';                                        //, 优先遍历节点 获取 被比较节点【NodeBundle】属性名
     return this;
   }
 
-  compared(comparedMap,comparedKey,source=false){
+  compared(comparedMap,comparedKey,comparedMappingKey,source=false){
     this.comparedMap=comparedMap;                                                              //, 被比较节点集
-    this.comparedKey=comparedKey;                                                                 //, 被比较节点规则组名
+    this.comparedKey=comparedKey;                                                                 //, 被比较节点着色规则组名（生效规则只用left）
+    this.comparedMappingKey=comparedMappingKey;                                     //, 被比较节点映射规则组名（合并树，节点来源需用left,right）
     this.sourceMappingId=source?'target':'source';                                             //, 被比较节点 获取 优先遍历节点 【NodeBundle】属性名
     return this;
   }
 
   structBuilder() {
-    return new StructBuilder(this.comparedMap, this.comparedMappingId, this.baseKey, this.canvasWidth, this.listItemHeight, false);
+    return new StructBuilder(this.comparedMap, this.comparedMappingId, this.baseKey, this.baseMappingKey,this.canvasWidth, this.listItemHeight, false);
   }
 
   reversedBuilder(){
-    return new StructBuilder(this.baseMap, this.sourceMappingId, this.comparedKey, this.canvasWidth, this.listItemHeight, true);
+    return new StructBuilder(this.baseMap, this.sourceMappingId, this.comparedKey, this.comparedMappingKey,this.canvasWidth, this.listItemHeight, true);
   }
 }
 
@@ -633,6 +635,21 @@ class Struct{
     if (this.type === Struct.DRAW_RECTANGLE) {
       let leftY=this.reversed?this.y2:this.y1;                //,左边起始y坐标
       let rightY=this.reversed?this.y1:this.y2;              //,右边起始y坐标
+      //,多对一收敛
+      /*let source=this.source.map((x,idx)=>({data:x.node.data.style===this.mode?x:null,idx})).filter(x=>x.data);
+      let target=this.target.map((x,idx)=>({data:x.node.data.style===this.mode?x:null,idx})).filter(x=>x.data);
+      let leftList=this.reversed?target:source;
+      let rightList=this.reversed?source:target;
+
+      let offsetLeft1=leftList.length<=0?0:leftList[0].idx*this.height;
+      let offsetLeft2=leftList.length<=0?0:leftList[leftList.length-1].idx*this.height;
+      let offsetRight1=rightList.length<=0?0:rightList[0].idx*this.height;
+      let offsetRight2=rightList.length<=0?0:rightList[rightList.length-1].idx*this.height;
+
+      this.point(0, leftY+offsetLeft1);
+      this.point(this.width, rightY+offsetRight1);
+      this.point(this.width, rightY +offsetRight2+this.height);
+      this.point(0, leftY + offsetLeft2+this.height);*/
       this.point(0, leftY);
       this.point(this.width, rightY);
       this.point(this.width, rightY + this.cp * this.height);
@@ -704,10 +721,11 @@ class Struct{
 
 //% 色块结构构造器
 class StructBuilder {
-  constructor(comparedMap, mappingId, key, width, height, reversed) {
+  constructor(comparedMap, mappingId, key,mappingKey, width, height, reversed) {
     this.comparedMap = comparedMap;                                                            //, 比较的集合
     this.mappingId = mappingId;                                                                       //, nodes集获取的键名[source,target]
     this.key = key;                                                                                              //, 获取的规则组名
+    this.mappingKey = mappingKey;                                                                  //, 获取的规则组名
     this.width = width;                                                                                       //,画布宽度
     this.height = height;                                                                                     //,列表项高度
     this.sets = new Set();                                                                                    //,已匹配到的compared节点
@@ -722,11 +740,13 @@ class StructBuilder {
     if(!cur)return [];
     let structs=this.structs.filter(x=>x.next);
     return base.rules
-        .get(this.key,[])
+        .get(this.mappingKey,[])
         .filter(r=>{
           switch (r.config.mode){
-            case 'normal':return !structs.some(x=>x.treeRuleItem.config.mode==='normal')&&(cur.config.mode!=='mapping');    //, 着色规则为mapping则过滤normal规则
-            case 'mapping':return !structs.some(x=>x.treeRuleItem.config===r.config);                                                                 //, 过滤映射规则相同的
+            case 'normal':return !structs
+                .some(x=>x.treeRuleItem.config.mode==='normal'&&x.mode===cur.config.mode)&&                        //, 映射规则存在normal且着色规则一致则过滤
+                (cur.config.mode!=='mapping');                                                                                                             //, 着色规则为mapping则过滤normal规则
+            case 'mapping':return !structs.some(x=>x.treeRuleItem.config===r.config);                                               //, 映射规则存在相同的mapping规则则过滤
             default:return false;
           }
         })
@@ -760,7 +780,7 @@ class StructBuilder {
         continue;
       }
       /*let ruleItem=struct.treeRuleItem.config.mode==='normal'?baseItem.node.data.rules.get(this.key,[]).find(r=>r.config===struct.ruleItem.config):baseItem.node.data.rules.get(this.key,[]).find(r=>r.config===struct.treeRuleItem.config); //, 映射规则如果normal则config不同*/
-      let ruleItem=baseItem.node.data.rules.get(this.key,[]).find(r=>r.config===struct.treeRuleItem.config);
+      let ruleItem=baseItem.node.data.rules.get(this.mappingKey,[]).find(r=>r.config===struct.treeRuleItem.config);
       let {compared,pCompared}= ruleItem?this.getCompares(ruleItem): {};                                        //, 通过映射规则获取映射节点及映射节点父节点
       if(struct.ends(baseItem,compared,pCompared)){
         if(struct.build())res.push(struct);
