@@ -4,9 +4,10 @@
     <el-col :span="1"><el-input placeholder="end" v-model="end"></el-input></el-col>
     <el-col :span="1"><el-button @click="stoke">stoke</el-button></el-col>
   </el-row>-->
-  <el-switch active-text="合并后" inactive-text="全部节点"  v-model="view.controlPanel.midFilterMode" @change="onMidFilterChange"></el-switch>
-  &nbsp;
-  <el-switch active-text="收敛" inactive-text="发散"  v-model="view.controlPanel.convergence" @change="onMidBoxScroll"></el-switch>
+
+<!--  <el-switch active-text="合并后" inactive-text="全部节点"  v-model="view.controlPanel.midFilterMode" @change="onMidFilterChange"></el-switch>&nbsp;-->
+  <el-switch active-text="收敛" inactive-text="发散"  v-model="view.controlPanel.convergence" @change="onMidBoxScroll"></el-switch>&nbsp;
+  <el-switch active-text="渐变" inactive-text="单色"  v-model="view.controlPanel.linearGradient" @change="onMidBoxScroll"></el-switch>
   <el-row>
     <el-col :span="7">
       <el-scrollbar :height="view.boxHeight" @scroll="onLeftBoxScroll" class="box left-scroll" ref="leftTreeBox">
@@ -70,8 +71,9 @@ export default {
         boxHeight: 600,
         treeItemHeight:26,
         controlPanel:{
-          midFilterMode:false,
-          convergence:false
+          midFilterMode:false,                                                                               //, 过滤
+          convergence:false,                                                                                  //, 收敛
+          linearGradient:true                                                                                 //, 线性渐变
         },
         styles:{
           increment: {base:'rgba(187,249,162)',list:['rgba(187,249,162,0.42)'],stroke:'#94d27b'},
@@ -337,6 +339,13 @@ export default {
       this.onRightBoxScroll();
     },
 
+    m(left,mid,right){
+
+
+
+    },
+
+
     //. 绑定源节点映射的目标节点
     onRegisterNode(node,data){
 
@@ -398,6 +407,14 @@ export default {
             ctx.bezierCurveTo(s.points[0].x + radius, s.points[0].y, s.points[1].x - radius, s.points[1].y, s.points[1].x, s.points[1].y);
             ctx.lineTo(s.points[2].x, s.points[2].y);
             ctx.bezierCurveTo(s.points[2].x - radius, s.points[2].y, s.points[3].x + radius, s.points[3].y, s.points[3].x, s.points[3].y);
+
+            if(s.mode!==s.comparedMode&&s.mode!=='normal'&&s.comparedMode!=='normal'&&this.view.controlPanel.linearGradient){
+              //let grd=ctx.createLinearGradient(30,0,128,0);
+              let grd=ctx.createLinearGradient(s.points[0].x+radius,s.points[0].y+radius,s.points[2].x-radius,s.points[2].y-radius);
+              grd.addColorStop(0,this.view.styles[s.mode].list[0]);
+              grd.addColorStop(1,this.view.styles[s.comparedMode].list[0]);
+              ctx.fillStyle=grd;
+            }
           }
         }
         ctx.closePath();
@@ -614,23 +631,24 @@ class DrawConf{
 class Struct{
   static DRAW_TRIANGLE = 1;                            //三角形
   static DRAW_RECTANGLE = 2;                         //矩形
-  constructor(ruleItem,treeRuleItem,mode,level,y1,y2,height,width,key,reversed=false,convergence=false) {
-    this.ruleItem=ruleItem;                                 //, 着色规则
-    this.treeRuleItem=treeRuleItem;                   //, 映射规则 表明是原树结构（normal），或者映射到其他树（mapping），normal作为一种特殊的映射
-    this.mode=mode;                                         //, 实际着色类型!=this.ruleItem.config.mode（合并树时，例如左树increment,而右树已有节点，左规则生效为increment,而实际合并生效的规则为normal）
-    this.level=level;                                             //, 层级
-    this.y1=y1;                                                    //, base y起始坐标
-    this.y2=y2;                                                    //, compared y起始坐标
-    this.height=height;                                       //, 列表项高度
-    this.width=width;                                         //, canvas宽度
-    this.key=key;                                                //, 组名
-    this.reversed=reversed;                                 //, 色块是否镜像
-    this.bp=1;                                                     //, base 列表项数
-    this.next=true;                                              //, 色块是否闭合
-    this.points=[];                                               //, 绘点
-    this.source=[];                                              //, base 集合
-    this.target=[];                                               //, compared 集合
-    this.convergence=convergence;                   //, 一对多时是否收敛
+  constructor(ruleItem,treeRuleItem,mode,comparedMode,level,y1,y2,height,width,key,reversed=false,convergence=false) {
+    this.ruleItem=ruleItem;                                                    //, 着色规则
+    this.treeRuleItem=treeRuleItem;                                      //, 映射规则 表明是原树结构（normal），或者映射到其他树（mapping），normal作为一种特殊的映射
+    this.mode=mode;                                                           //, 实际着色类型!=this.ruleItem.config.mode（合并树时，例如左树increment,而右树已有节点，左规则生效为increment,而实际合并生效的规则为normal）
+    this.comparedMode=comparedMode||'normal';              //, 渐变时过渡到的着色类型
+    this.level=level;                                                               //, 层级
+    this.y1=y1;                                                                      //, base y起始坐标
+    this.y2=y2;                                                                      //, compared y起始坐标
+    this.height=height;                                                         //, 列表项高度
+    this.width=width;                                                           //, canvas宽度
+    this.key=key;                                                                  //, 组名
+    this.reversed=reversed;                                                   //, 色块是否镜像
+    this.bp=1;                                                                       //, base 列表项数
+    this.next=true;                                                                //, 色块是否闭合
+    this.points=[];                                                                 //, 绘点
+    this.source=[];                                                                //, base 集合
+    this.target=[];                                                                 //, compared 集合
+    this.convergence=convergence;                                      //, 一对多时是否收敛
   }
 
   //.封闭图形绘点
@@ -641,7 +659,7 @@ class Struct{
 
       if(this.convergence){                                          //,多对一收敛
         let source=this.source.map((x,idx)=>({data:x.node.data.style===this.mode?x:null,idx})).filter(x=>x.data);
-        let target=this.target.map((x,idx)=>({data:x.node.data.style===this.mode?x:null,idx})).filter(x=>x.data);
+        let target=this.target.map((x,idx)=>({data:x.node.data.style===this.comparedMode?x:null,idx})).filter(x=>x.data);
         let leftList=this.reversed?target:source;
         let rightList=this.reversed?source:target;
 
@@ -684,12 +702,18 @@ class Struct{
         base.rules.cur(this.key).config.mode==='mapping'?
         base.rules.get(this.key, []).some(r => r.config === this.ruleItem.config):    //, mapping时找到对应的mapping则未闭合
         base.rules.cur(this.key).config === this.ruleItem.config;                            //, 否则以第一个规则是否匹配判断闭合
-    if (!matchConf) return true;                                                                           //, 规则不同
+    if (!matchConf) return true;                                                                           //, 着色规则不同
     if (this.type === Struct.DRAW_TRIANGLE) {
       if (baseItem.node.data.level < this.level) return true;                                    //, 层级小于起始层级，
       if (!pCompared||pCompared.id !== this.pc.id || compared)return true;          //, 三角模式-无对应父节点或者对应父节点非同一个id
     } else if (this.type === Struct.DRAW_RECTANGLE) {
       if (!compared) return true;                                                                           //, 矩形模式-无对应节点
+      if(compared.node.data.style!=='normal'){
+        if(this.comparedMode!=='normal'&& compared.node.data.style!==this.comparedMode){
+          return true;                                                                                             //, 除基础规则外（normal可以收敛，认为不着色），如果compared上色规则不同则闭合
+        }
+        this.comparedMode=compared.node.data.style;                                       //, 如果compared节点着色规则存在（非normal）,则设置
+      }
       if (compared.idx-this.ci !== 1)return true;                                                    //, 可见对应节点顺序不相邻
       this.ci = compared.idx;
       this.cp++;
@@ -765,6 +789,7 @@ class StructBuilder {
               cur.config.mode==='mapping'?r:cur,                                  //,  着色规则为mapping则用mapping：否则按其他规则着色
               r,
               base.style,
+              compared?compared.node.data.style:null,
               base.level,
               baseItem.y,
               compared?compared.y:pCompared.y,
