@@ -153,6 +153,7 @@ export default {
               target: 'mix/MM',
               mode: 'mapping'/*,sub:true,shield:true*/
               ,pruning:true
+              /*,through:true*/ //映射穿透
             },
             //{base:'mix',relative:'/cover/mapping',mode:'update'},
             {base: 'mix', relative: '/cover/mapping', mode: 'increment'/*,through:true*/},
