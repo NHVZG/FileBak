@@ -1359,7 +1359,12 @@ body {
   overflow-x: auto;*/
   position: relative;
 }
-
+/*.is-current>.el-tree-node__content{
+  background-color: red;
+}
+.el-tree-node__content:hover{
+  background-color: red;
+}*/
 /*
 .wrapper {
   float: left;

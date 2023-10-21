@@ -1,5 +1,5 @@
 <template>
-  <el-tree :props="treePropName" :data="treeData" ref="tree" default-expand-all :filter-node-method="filterNode">
+  <el-tree :props="treePropName" :data="treeData" ref="tree" default-expand-all :filter-node-method="filterNode" @nodeClick="onNodeClick">
     <template #default="{ node, data }">
 
       <div class="diff-node" :ref="registerRef(node,data)" :data-node-id="`${node.id}`"><!--:data-node-id="`${data.id}`" :data-node-bsid="data.bsid" :id="`node_${node.id}`" :data-node-level="`${node.level}`"-->
@@ -131,6 +131,9 @@ export default {
     },
     getNode(id){
       return this.$refs.tree.getNode(id);
+    },
+    onNodeClick(data,node,tree,event){
+
     }
   }
 }
