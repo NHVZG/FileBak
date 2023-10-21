@@ -17,7 +17,7 @@
       </el-scrollbar>
     </el-col>
     <el-col :span="2">
-      <div style="height: 100%">
+      <div><!--style="height: 100%"--><!--100%会导致画布拉长，绘制出现偏差-->
         <canvas ref="canvas1" style="height: 100%;width:100%"></canvas>
       </div>
     </el-col>
@@ -29,7 +29,7 @@
       </el-scrollbar>
     </el-col>
     <el-col :span="2">
-      <div style="height: 100%">
+      <div ><!--style="height: 100%"-->
         <canvas ref="canvas2" style="height: 100%;width:100%"></canvas>
       </div>
     </el-col>
@@ -247,6 +247,13 @@ export default {
     canvas2.height=this.view.boxHeight;
     this.view.viewPortNodes=(this.view.boxHeight/this.view.treeItemHeight)+2;                //初始化可视节点数
 
+   window.onresize=()=>{
+     let parent1=canvas1.parentElement;
+     let parent2=canvas2.parentElement;
+     canvas1.width=parent1.clientWidth;
+     canvas2.width=parent2.clientWidth;
+     this.onMidBoxScroll();
+   }
     this.onMidBoxScroll();
   },
 
@@ -382,7 +389,8 @@ export default {
       let ctx=canvas.getContext('2d');
 
       ctx.lineWidth = 0.8;
-      let radius=50;
+      let offset=0;
+      let radius=canvas.width/2;//50;
       let borderBottomStyle='3px solid ';
 
       for(let s of structs){
@@ -393,20 +401,20 @@ export default {
         ctx.beginPath();
         if(s.reversed){
           if (s.points.length === 3) {
-            ctx.moveTo(s.points[0].x, s.points[0].y);
+            ctx.moveTo(s.points[0].x-offset, s.points[0].y);
             ctx.bezierCurveTo(s.points[0].x - radius, s.points[0].y, s.points[1].x + radius, s.points[1].y, s.points[1].x, s.points[1].y);
-            ctx.bezierCurveTo(s.points[1].x + radius, s.points[1].y, s.points[2].x - radius, s.points[2].y, s.points[2].x, s.points[2].y);
+            ctx.bezierCurveTo(s.points[1].x + radius, s.points[1].y, s.points[2].x - radius, s.points[2].y, s.points[2].x-offset, s.points[2].y);
           }
         }else {
           if (s.points.length === 3) {
-            ctx.moveTo(s.points[0].x, s.points[0].y);
+            ctx.moveTo(s.points[0].x+offset, s.points[0].y);
             ctx.bezierCurveTo(s.points[0].x + radius, s.points[0].y, s.points[1].x - radius, s.points[1].y, s.points[1].x, s.points[1].y);
-            ctx.bezierCurveTo(s.points[1].x - radius, s.points[1].y, s.points[2].x + radius, s.points[2].y, s.points[2].x, s.points[2].y);
+            ctx.bezierCurveTo(s.points[1].x - radius, s.points[1].y, s.points[2].x + radius, s.points[2].y, s.points[2].x+offset, s.points[2].y);
           } else if (s.points.length === 4) {
-            ctx.moveTo(s.points[0].x, s.points[0].y);
-            ctx.bezierCurveTo(s.points[0].x + radius, s.points[0].y, s.points[1].x - radius, s.points[1].y, s.points[1].x, s.points[1].y);
-            ctx.lineTo(s.points[2].x, s.points[2].y);
-            ctx.bezierCurveTo(s.points[2].x - radius, s.points[2].y, s.points[3].x + radius, s.points[3].y, s.points[3].x, s.points[3].y);
+            ctx.moveTo(s.points[0].x+offset, s.points[0].y);
+            ctx.bezierCurveTo(s.points[0].x + radius, s.points[0].y, s.points[1].x - radius, s.points[1].y, s.points[1].x-offset, s.points[1].y);
+            ctx.lineTo(s.points[2].x-offset, s.points[2].y);
+            ctx.bezierCurveTo(s.points[2].x - radius, s.points[2].y, s.points[3].x + radius, s.points[3].y, s.points[3].x+offset, s.points[3].y);
 
             if(s.mode!==s.comparedMode&&s.mode!=='normal'&&s.comparedMode!=='normal'&&this.view.controlPanel.linearGradient){
               //let grd=ctx.createLinearGradient(30,0,128,0);
@@ -462,7 +470,7 @@ export default {
             ...o,
             [n.dataset.nodeId]:{e: n,
             //y: origin + this.view.treeItemHeight * idx,
-            y: n.parentElement.offsetTop-div.scrollTop-0.8,                                     //,起始y
+            y: n.parentElement.offsetTop-div.scrollTop,                                     //,起始y
             id: n.dataset.nodeId,
             node:treeRef.getNode(n.dataset.nodeId),
             level:parseInt(n.dataset.nodeLevel),
