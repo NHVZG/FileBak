@@ -7,7 +7,9 @@
 
 <!--  <el-switch active-text="合并后" inactive-text="全部节点"  v-model="view.controlPanel.midFilterMode" @change="onMidFilterChange"></el-switch>&nbsp;-->
   <el-switch active-text="收敛" inactive-text="发散"  v-model="view.controlPanel.convergence" @change="onMidBoxScroll"></el-switch>&nbsp;
-  <el-switch active-text="渐变" inactive-text="单色"  v-model="view.controlPanel.linearGradient" @change="onMidBoxScroll"></el-switch>
+  <el-switch active-text="渐变" inactive-text="单色"  v-model="view.controlPanel.linearGradient" @change="onMidBoxScroll"></el-switch>&nbsp;
+  <el-switch active-text="同步" inactive-text="独立"  v-model="view.controlPanel.scrollSync" @change="onMidBoxScroll"></el-switch>
+  <el-button @click="scroll">scroll</el-button>
   <el-row>
     <el-col :span="7">
       <el-scrollbar :height="view.boxHeight" @scroll="onLeftBoxScroll" class="box left-scroll" ref="leftTreeBox">
@@ -68,12 +70,24 @@ export default {
       rightTree:[],
       midTree:[],
       view: {
+        scrolling:{
+          left:false,
+          right:false,
+          mid:false,
+        },
+        timer:{
+          left:null,
+          right:null,
+          mid:null,
+        },
+        scrollDelay:8,
         boxHeight: 600,
         treeItemHeight:26,
         controlPanel:{
           midFilterMode:false,                                                                               //, 过滤
           convergence:false,                                                                                  //, 收敛
-          linearGradient:true                                                                                 //, 线性渐变
+          linearGradient:true,                                                                                 //, 线性渐变
+          scrollSync:true                                                                                        //, 滚动同步
         },
         styles:{
           increment: {base:'rgba(187,249,162)',list:['rgba(187,249,162,0.42)'],stroke:'#94d27b'},
@@ -258,6 +272,12 @@ export default {
   },
 
   methods:{
+    scroll(){
+      this.$refs.leftTreeBox.setScrollTop(100);
+      this.$refs.leftTreeBox.update(()=>{});
+      console.log($(`[data-node-id=12d3]:visible`));
+    },
+
     stoke(){
       let canvas=this.$refs.canvas1;
       let parent=canvas.parentElement;
@@ -306,8 +326,7 @@ export default {
       return 'normal';
     },
 
-
-    onLeftBoxScroll(){
+    leftDraw(){
       let canvas=this.$refs.canvas1;
       let parent=canvas.parentElement;
       let ctx=canvas.getContext('2d');
@@ -322,9 +341,10 @@ export default {
       let s1=this.buildDrawStruct(canvasConf);
       this.drawCanvas(canvas,s1.structs1);
       this.drawCanvas(canvas,s1.structs2);
+      return {leftNodes,midNodes};
     },
 
-    onRightBoxScroll(){
+    rightDraw(){
       let canvas=this.$refs.canvas2;
       let parent=canvas.parentElement;
       let ctx=canvas.getContext('2d');
@@ -339,17 +359,143 @@ export default {
       let s2=this.buildDrawStruct(canvasConf);
       this.drawCanvas(canvas,s2.structs1);
       this.drawCanvas(canvas,s2.structs2);
+      return {midNodes,rightNodes};
     },
 
-    onMidBoxScroll(){
-      this.onLeftBoxScroll();
-      this.onRightBoxScroll();
+
+    async onLeftBoxScroll(){
+      if(this.view.scrolling.right||this.view.scrolling.mid||this.view.scrolling.left)return;
+      this.view.scrolling.left=true;
+      let {leftNodes,midNodes}= this.leftDraw();
+      this.scrollSync(leftNodes,midNodes,this.findBoxVisibleNode(this.$refs.rightTreeBox,this.$refs.rightTree),'left');
+      clearTimeout(this.view.timer.left);
+      this.view.timer.left = setTimeout(() => this.view.scrolling.left = false, this.view.scrollDelay);
     },
 
-    m(left,mid,right){
+    async onRightBoxScroll(){
+      let{rightNodes,midNodes}= this.rightDraw();
+      if(this.view.scrolling.mid||this.view.scrolling.left||this.view.scrolling.right)return;
+      this.view.scrolling.right=true;
+      this.scrollSync(this.findBoxVisibleNode(this.$refs.leftTreeBox,this.$refs.leftTree),midNodes,rightNodes,'right');
+      clearTimeout(this.view.timer.right);
+      this.view.timer.right = setTimeout(() => this.view.scrolling.right = false, this.view.scrollDelay);
+    },
 
+    async onMidBoxScroll(){
+      let {leftNodes,midNodes}= this.leftDraw();
+      let{rightNodes}= this.rightDraw();
+      if(this.view.scrolling.left||this.view.scrolling.right||this.view.scrolling.mid)return;
+      this.view.scrolling.mid=true;
+      this.scrollSync(leftNodes,midNodes,rightNodes,'mid');
+      clearTimeout(this.view.timer.mid);
+      this.view.timer.mid = setTimeout(() => this.view.scrolling.mid = false, this.view.scrollDelay);
+    },
 
+    //. 根据路径找节点
+    findNode(tree,path){
+      let nearest=tree
+      if(!tree.children)return {nearest};
+      for(let node of tree.children){
+        if(path===node.path){
+          return {match:node};
+        }
+        if(path.startsWith(node.path)){
+          nearest=node;
+          let finds=this.findNode(node,path);
+          if(finds.match)return finds;
+        }
+      }
+      return {nearest};
+    },
 
+    //. 根据可视节点+路径 查找其他树的对应节点位置
+    findNodeByPath(map,trees){
+      if(trees.length===0)return {};
+      for(let obj of Object.values(map)){
+        if(obj.y<0)continue;
+        let path=obj.node.data.path;
+        let res=[];
+        for(let tree of trees){
+          let r=this.findNode({children:tree.tree.treeData},path);
+          if(r.match)res.push({...tree,match:r.match});
+        }
+        if(res.length===trees.length)return {list:res,source:obj};
+      }
+      return {};
+    },
+
+    //. 滚动同步
+    scrollSync(left,mid,right,active){                                                                     //, left,mid,right：可视节点，active：滚动的列表[left,mid,right]
+      if(!this.view.controlPanel.scrollSync)return;
+      let xxx={};                                                                                                   //, 左中右列表公有节点集合
+      let xxo={};                                                                                                   //, 左中列表公有节点集合
+      let oxx={};                                                                                                   //, 中右列表公有节点集合
+      let midMap=Object.values(mid).reduce((o,x)=>({...o,[x.node.data.path]:x}),{});
+      for(let n of Object.entries(left)){
+        let m=midMap[n[1].node.data.path];
+        if(m)xxo[n[1].node.data.path]={left:n[1],mid:m};
+      }
+      for(let n of Object.entries(right)){
+        let l=xxo[n[1].node.data.path];
+        if(l){
+          l.right=n[1];
+          xxx[n[1].node.data.path]=l;
+          oxx[n[1].node.data.path]=l;
+        }else{
+          let m=midMap[n[1].node.data.path];
+          if(m)oxx[n[1].node.data.path]={right:n[1],mid:m};
+        }
+      }
+
+      let map;
+      let mainTree;
+      let trees=[];
+      let offset=3;
+      if(Object.keys(xxx).length>0){
+        let item=Object.values(xxx)[0];
+        if(active==='left'){
+          this.$refs.midTreeBox.setScrollTop(item.mid.offset-item.left.y+offset);
+          this.$refs.rightTreeBox.setScrollTop(item.right.offset-item.left.y+offset);
+        }else if(active==='mid'){
+          this.$refs.leftTreeBox.setScrollTop(item.left.offset-item.mid.y+offset);
+          this.$refs.rightTreeBox.setScrollTop(item.right.offset-item.mid.y+offset);
+        }else if(active==='right'){
+          this.$refs.leftTreeBox.setScrollTop(item.mid.offset-item.right.y+offset);
+          this.$refs.midTreeBox.setScrollTop(item.mid.offset-item.right.y+offset);
+        }
+        return;
+      }
+      let leftTree={tree:this.$refs.leftTree,box:this.$refs.leftTreeBox};
+      let midTree={tree:this.$refs.midTree,box:this.$refs.midTreeBox};
+      let rightTree={tree:this.$refs.rightTree,box:this.$refs.rightTreeBox};
+
+      if(active==='left'){
+        mainTree=this.$refs.leftTree;
+        map=left;
+        if(Object.keys(xxo).length>0)                 trees=[rightTree];
+        else                                                             trees=[midTree,rightTree];
+      }else if(active==='mid'){
+        mainTree=this.$refs.midTree;
+        map=mid;
+        if(Object.keys(xxo).length>0)                 trees=[rightTree];
+        else if(Object.keys(oxx).length>0)          trees=[leftTree];
+        else                                                             trees=[leftTree,rightTree];
+      }else if(active==='right'){
+        mainTree=this.$refs.rightTree;
+        map=right;
+        if(Object.keys(oxx).length>0)                 trees=[leftTree];
+        else                                                             trees=[leftTree,midTree];
+      }
+      let res=this.findNodeByPath(map,trees);
+      if(res.source){
+        let y=res.source.y;
+        for(let item of res.list){
+          let es=$(`[data-node-id=${item.match.id}]:visible`);
+          if(es.length>0){
+            item.box.setScrollTop(es[0].parentElement.offsetTop-y+offset);
+          }
+        }
+      }
     },
 
 
@@ -470,6 +616,7 @@ export default {
             ...o,
             [n.dataset.nodeId]:{e: n,
             //y: origin + this.view.treeItemHeight * idx,
+            offset:n.parentElement.offsetTop,
             y: n.parentElement.offsetTop-div.scrollTop,                                     //,起始y
             id: n.dataset.nodeId,
             node:treeRef.getNode(n.dataset.nodeId),
