@@ -80,7 +80,7 @@ export default {
           right:null,
           mid:null,
         },
-        scrollDelay:8,
+        scrollDelay:14,
         boxHeight: 600,
         treeItemHeight:26,
         controlPanel:{
@@ -365,9 +365,9 @@ export default {
 
 
     async onLeftBoxScroll(){
+      let {leftNodes,midNodes}= this.leftDraw();
       if(this.view.scrolling.right||this.view.scrolling.mid||this.view.scrolling.left)return;
       this.view.scrolling.left=true;
-      let {leftNodes,midNodes}= this.leftDraw();
       this.scrollSync(leftNodes,midNodes,this.findBoxVisibleNode(this.$refs.rightTreeBox,this.$refs.rightTree),'left');
       clearTimeout(this.view.timer.left);
       this.view.timer.left = setTimeout(() => this.view.scrolling.left = false, this.view.scrollDelay);
@@ -536,7 +536,7 @@ export default {
       let ctx=canvas.getContext('2d');
 
       ctx.lineWidth = 0.8;
-      let offset=0;
+      let offset=-1;
       let radius=canvas.width/2;//50;
       let borderBottomStyle='3px solid ';
 
