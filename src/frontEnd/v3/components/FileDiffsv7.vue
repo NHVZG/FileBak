@@ -536,7 +536,7 @@ export default {
       let ctx=canvas.getContext('2d');
 
       ctx.lineWidth = 0.8;
-      let offset=-1;
+      let offset=0;
       let radius=canvas.width/2;//50;
       let borderBottomStyle='3px solid ';
 
