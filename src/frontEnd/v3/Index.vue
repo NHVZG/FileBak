@@ -11,7 +11,7 @@
 <!--  <FileDiffsv3/>-->
 <!--  <FileDiffsv5/>-->
 <!--  <FileDiffsv6/>-->
-  <FileDiffsv7/>
+  <FileDiffsv7Demo/>
 </template>
 
 <script>
@@ -25,7 +25,7 @@ import FileDiffsv3 from "@/frontEnd/v3/components/_deprecate/FileDiffsv3.vue";
 import FileDiffsv4 from "@/frontEnd/v3/components/_deprecate/FileDiffsv4.vue";
 import FileDiffsv5 from "@/frontEnd/v3/components/_deprecate/FileDiffsv5.vue";
 import FileDiffsv6 from "@/frontEnd/v3/components/_deprecate/FileDiffsv6.vue";
-import FileDiffsv7 from "@/frontEnd/v3/components/FileDiffsv7.vue";
+import FileDiffsv7Demo from "@/frontEnd/v3/components/FileDiffsv7-demo.vue";
 export default {
   name: "Index-v3",
   components:{
@@ -39,7 +39,7 @@ export default {
     FileDiffsv4,
     FileDiffsv5,
     FileDiffsv6,
-    FileDiffsv7
+    FileDiffsv7Demo
   },
   data(){
     return {

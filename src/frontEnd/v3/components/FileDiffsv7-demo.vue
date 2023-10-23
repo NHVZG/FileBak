@@ -451,7 +451,7 @@ export default {
       let map;
       let mainTree;
       let trees=[];
-      let offset=3;
+      let offset=0;
       if(Object.keys(xxx).length>0){
         let item=Object.values(xxx)[0];
         if(active==='left'){
