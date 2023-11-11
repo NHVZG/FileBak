@@ -6,6 +6,8 @@ import installExtension, { VUEJS3_DEVTOOLS } from 'electron-devtools-installer'
 import * as path from "path";
 import {ipcHandleInit} from "./v1/ipcProcess";
 import {initIpcMain,setWin} from "./v3/bridge";
+import {bridge} from "./v4/init/bridge";
+import {initAfter, initBefore} from "./v4/init/init";
 import {testIpcHandleInit} from "../test/backend/index";
 import {fbu_config_init} from "./v1/config/config-center";
 
@@ -87,22 +89,29 @@ app.on('ready', async () => {
       console.error('Vue Devtools failed to install:', e.toString())
     }
   }
-  // .v3 - 先注册监听事件 再设置窗体句柄，否则vue在窗体创建后便可执行mounted，而ipcMain未注册导致调用失败
-  initIpcMain();
+  //, v3 - 先注册监听事件 再设置窗体句柄，否则vue在窗体创建后便可执行mounted，而ipcMain未注册导致调用失败
+  //initIpcMain();
+  //, v4 - 主线程监听事件初始化
+  await initBefore();
+  bridge.init();
+  initAfter();
+
   //创建窗口
   let win=await createWindow();
   //let win1=await createWindow();
 
-  //测试入口
-  testIpcHandleInit(win);
-  //. v1
+  //, v1
   //主进程事件监听
   //ipcHandleInit(win);
   //配置初始化
   //fbu_config_init();
-  //. v3
-  setWin(win);
-
+  //, v3
+  //setWin(win);
+  //, v4-设置窗体句柄
+  bridge.setWin(win);
+  //, test
+  //测试入口
+  testIpcHandleInit(win);
 
 })
 

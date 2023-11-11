@@ -28,12 +28,19 @@ module.exports = defineConfig({
                 ['@babel/plugin-proposal-class-properties', { loose: true }]
               ]
             });
+      //自动扫描方式1-自定义loader
+        /*config.module.rule('tes')
+            .test(/\.js$/)
+            .exclude.add(/node_modules/).add(path.resolve(__dirname,'src/frontEnd')).end()
+            .use('tes')
+            .loader(path.resolve(__dirname,'src/backend/v4/loader/loader.js'));*/
       },
 
       preload: {
         //preload:'src/backend/v1/preload.js',
         //preload:'src/backend/v2/preload.js',
-        preload:'src/backend/v3/preload.js',
+        //preload:'src/backend/v3/preload.js',
+        preload:'src/backend/v4/init/preload.js',
         otherPreload:'src/test/backend/preload-test.js'
       },
       // Or, for multiple preload files:
@@ -49,7 +56,11 @@ module.exports = defineConfig({
           artifactName: "fbu_portable.exe"
         },
         productName:"fbu",
-        files: ["**/*"],
+        files: ["**/*",{
+          from:"../../src",
+          to:"./src",
+          filter:["**/*"]
+        }],
         asar: true
       }
     },
