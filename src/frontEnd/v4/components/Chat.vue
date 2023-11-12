@@ -107,7 +107,7 @@
             <el-col>
             <el-scrollbar height="100" class="chat-block">
               <div v-for="item in data.client1.msg">
-                <el-tag type="success">{{item.msgType}}</el-tag>
+                <el-tag :type="item.msgType==='rtc'?'warning':'success'">{{item.msgType}}</el-tag>
                 <el-text :title="item.time">【<el-text type="primary">{{item.from}}</el-text>】</el-text>
                 <el-text>{{item.data.data.text}}</el-text>
               </div>
@@ -175,7 +175,7 @@
             <el-col>
               <el-scrollbar height="100" class="chat-block">
                 <div v-for="item in data.client2.msg">
-                  <el-tag type="success">{{item.msgType}}</el-tag>
+                  <el-tag :type="item.msgType==='rtc'?'warning':'success'">{{item.msgType}}</el-tag>
                   <el-text :title="item.time">【<el-text type="primary">{{item.from}}</el-text>】</el-text>
                   <el-text>{{item.data.data.text}}</el-text>
                 </div>
@@ -186,7 +186,7 @@
       </el-col>
     </el-row>
     
-
+  <el-button @click="test">test</el-button>
   </div>
 </template>
 
@@ -235,20 +235,16 @@ export default {
       onWsServerMsg:(content)=>this.data.server.msg.push({...content,msgType:'ws'}),//({data})=>ElNotification({title:'ws服务端收到消息',message:data.text}),
       onWsServerMsgSend:(content)=>this.isMsg(content)&&this.data.server.msg.push({...content,msgType:'ws'})
     },this.clone(this.conf.server.ws)));
-    let client1=reactive(new Client('client1',{
-      onChannelMsg:(data,msg)=>this.data.client1.msg.push({data,msgType:'channel',time:time(),from:this.client1.remoteClientID}),
-      onWsMsg:(content)=>this.data.client1.msg.push({...content,msgType:'ws'}),//({data})=>ElNotification({title:'ws客户端1收到消息',message:data.text}),
+    this.client1=reactive(new Client('client1',{
+      onChannelMsg:(data,msg)=>this.data.client1.msg.push({data,msgType:'rtc',time:time(),from:this.client1.remoteClientID}),
+      onWsMsg:(content)=>this.data.client1.msg.push({...content,msgType:'ws '}),//({data})=>ElNotification({title:'ws客户端1收到消息',message:data.text}),
       onWsMsgSend:(content)=>this.isMsg(content)&&this.data.client1.msg.push({...content,msgType:'ws'}),
     },this.clone(this.conf.client1)));
-    let client2=reactive(new Client('client2',{
-      onChannelMsg:(data,msg)=>this.data.client2.msg.push({data,msgType:'channel',time:time(),from:this.client2.remoteClientID}),
-      onWsMsg:(content)=>this.data.client2.msg.push({...content,msgType:'ws'}),//({data})=>ElNotification({title:'ws客户端2收到消息',message:data.text}),
+    this.client2=reactive(new Client('client2',{
+      onChannelMsg:(data,msg)=>this.data.client2.msg.push({data,msgType:'rtc',time:time(),from:this.client2.remoteClientID}),
+      onWsMsg:(content)=>this.data.client2.msg.push({...content,msgType:'ws '}),//({data})=>ElNotification({title:'ws客户端2收到消息',message:data.text}),
       onWsMsgSend:(content)=>this.isMsg(content)&&this.data.client2.msg.push({...content,msgType:'ws'}),
     },this.clone(this.conf.client2)));
-
-    this.client=client1;
-    this.client1=client1;
-    this.client2=client2;
   },
   async mounted() {
     //window.chat.onChannelMsg((...arg)=>console.log(arg));
@@ -261,14 +257,15 @@ export default {
   },
   methods:{
     async test(){
-      let struct=await window.files.dir({base:'C:/'});
-      console.log(struct);
+      window.files.onFileStructReply('client1',(struct)=>{
+        console.log(struct);
+      });
+      await window.files.remoteDir(this.client1.name,{base:'D:/'});
     },
     isMsg(content){
       return content.data.type==='ws-msg'||content.data.type==='ws-msg-transfer'
     },
     clone(obj){
-      console.log(obj);
       return JSON.parse(JSON.stringify(obj));
     }
   }

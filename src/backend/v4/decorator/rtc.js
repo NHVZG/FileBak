@@ -5,6 +5,7 @@ import {msgCenter,SERVICE} from "@/backend/v4/core/service/webrtcContainor";
 let metadataGroup='controller';
 
 //. 类注解，统一客户端类型
+//, 与@api联用时在@api前定义
 function controller(clientType){
     return (target,name,descriptor)=>{
         let register=metadata(target,target,metadataGroup)
@@ -25,8 +26,8 @@ function channel(event){              //, event：事件名
 function channelReply(){                                    //,客户端类型
     return (target,name,descriptor)=>{
         let func = descriptor.value;
-        descriptor.value = function (...args) {
-            let result=func.apply(this,args);
+        descriptor.value = async function (...args) {
+            let result=await func.apply(this,args);
 
             let client=args[args.length-1];
             if(client instanceof WebRTCClient){
