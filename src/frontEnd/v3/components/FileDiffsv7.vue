@@ -139,6 +139,8 @@ export default {
             //{base:'base/mapping/#mapping@4/#mapping@11',mode:'increment',dispatch: Rule.DISPATCH_TARGET,pruning:true},
             //{base:'base/mapping/#mapping@2/#mapping@11',mode:'increment'},
             {base:'base/mapping/#mapping@2',target:'base/mapping/#mapping@4',mode:'mapping'/*,pruning:true*/},
+            {base:'base/mapping/#mapping@2/#mapping@11/7#mapping@11',target:'base/mapping/#mapping@2/#mapping@11/7#mapping@11',mode:'mapping',pruning:true},
+            //{base:'base/mapping/#mapping@2/#mapping@11/7#mapping@11',target:'base/mapping/#mapping@x',mode:'mapping',pruning:true},
             //{base:'base/mapping/#mapping@1/5#mapping@1',target:'base/mapping/#mapping@00/a',mode:'mapping',shieldParent:true},
 
             {base: 'mix', relative: '/cover', mode: 'cover'},
@@ -1059,7 +1061,7 @@ class Node{
               .map(x=>{
                 if(x.config.mode==='mapping'&&x.config===r.config){
                   x.nodes.target=target;
-                }else if(/*x.config.mode==='normal'&&*/r.nodes.source.path===target.path){
+                }else if(x.config.mode==='normal'&&r.nodes.source.path===target.path){      //, 普通规则才根据路径设置target(避免覆盖mapping规则的nodes.target)
                   x.nodes.target=target;
                 }});
         });
