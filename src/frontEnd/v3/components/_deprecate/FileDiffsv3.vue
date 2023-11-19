@@ -442,8 +442,8 @@ export default {
 
 
 <style>
-body {
-  /*background-color: /#ff0000;*/
+/*body {
+  !*background-color: /#ff0000;*!
 }
 .increment{
  background-color: #bbf9a2;
@@ -463,7 +463,7 @@ body {
 .remove{
   background-color: #e7a3be;
 }
-.mapping{/*>div:nth-child(1):after*/
+.mapping{!*>div:nth-child(1):after*!
 
 }
 .mapping>div:nth-child(1){
@@ -471,5 +471,5 @@ body {
 }
 .normal{
   background-color: white;
-}
+}*/
 </style>

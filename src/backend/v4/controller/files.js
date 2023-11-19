@@ -17,23 +17,23 @@ class FileController{
 
     //. 请求远程客户端文件结构
     @request("remoteDir")
-    async requestRemoteFileStruct(name,{base}){
-        clientCenter.get(name).sendChannel({base,type:'file-struct-request'});
+    async requestRemoteFileStruct(name,{base,requestId}){
+        clientCenter.get(name).sendChannel({base,requestId,type:'file-struct-request'});
     }
 
     //. 接收远程客户端文件结构”请求“
     @channel('file-struct-request')
     @channelReply()
-    async remoteFileStruct({base},client){
+    async remoteFileStruct({base,requestId},client){
         let struct=await dir(base);
-        return {type:'file-struct-reply',struct};
+        return {type:'file-struct-reply',struct,requestId};
     }
 
     //.接收远程客户端文件结构“返回”
     @channel('file-struct-reply')
     @listen({fire:true,handler:new RtcHandler(SERVICE.CLIENT_RTC_CHANNEL,'fileStructReply')})
-    onFileStructReply({struct},client){
-        return struct;
+    onFileStructReply({struct,requestId},client){
+        return {struct,requestId};
     }
 
 }

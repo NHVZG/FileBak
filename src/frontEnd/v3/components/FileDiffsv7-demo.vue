@@ -1297,39 +1297,40 @@ class Rule{
 </script>
 
 <style>
+/*
 body {
-  /*background-color: /#ff0000;*/
+  !*background-color: /#ff0000;*!
 }
 .increment{
-  /*background-color: #bbf9a2;*/
+  !*background-color: #bbf9a2;*!
   background-color: v-bind('view.styles.increment.base');
 }
 .incrementUpdate{
-  /*background-color: #a2f9eb;*/
+  !*background-color: #a2f9eb;*!
   background-color: v-bind('view.styles.incrementUpdate.base');
 }
 .update{
-  /*background-color: #e0f9a2;*/
+  !*background-color: #e0f9a2;*!
   background-color: v-bind('view.styles.update.base');
 }
 .except{
-  /*background-color: #cacaca;*/
+  !*background-color: #cacaca;*!
   background-color: v-bind('view.styles.except.base');
 }
 .cover{
-  /*background-color: #97a1f4;*/
+  !*background-color: #97a1f4;*!
   background-color: v-bind('view.styles.cover.base');
 }
 .remove{
-  /*background-color: #e7a3be;*/
+  !*background-color: #e7a3be;*!
   background-color: v-bind('view.styles.remove.base');
 }
 .mapping{
-  /*background-color: #debde7;*/
+  !*background-color: #debde7;*!
   background-color: v-bind('view.styles.mapping.base');
 }
-.mapping>div:nth-child(1){/*>div:nth-child(1):after*/
-  /*background-color: v-bind('view.styles.mapping.base');*/
+.mapping>div:nth-child(1){!*>div:nth-child(1):after*!
+  !*background-color: v-bind('view.styles.mapping.base');*!
 }
 .normal{
   background-color: v-bind('view.styles.normal.base');
@@ -1344,29 +1345,29 @@ body {
 }
 
 
-.left-scroll{/*'右到左*/
-  /*direction: rtl;*/
+.left-scroll{!*'右到左*!
+  !*direction: rtl;*!
 }
-.left-scroll div{/*'恢复左到右*/
-  /*direction: ltr;*/
+.left-scroll div{!*'恢复左到右*!
+  !*direction: ltr;*!
 }
-.right-scroll{/*'左到右*/
-  /*direction: ltr;*/
+.right-scroll{!*'左到右*!
+  !*direction: ltr;*!
 }
 
 .box{
-  /*使用element-ui滚动组件*/
-  /*overflow-y: auto;
-  overflow-x: auto;*/
+  !*使用element-ui滚动组件*!
+  !*overflow-y: auto;
+  overflow-x: auto;*!
   position: relative;
 }
-/*.is-current>.el-tree-node__content{
+!*.is-current>.el-tree-node__content{
   background-color: red;
 }
 .el-tree-node__content:hover{
   background-color: red;
-}*/
-/*
+}*!
+!*
 .wrapper {
   float: left;
   animation: background 5s infinite alternate;
@@ -1379,5 +1380,5 @@ body {
   to {
     background: #c0d6ff;
   }
-}*/
+}*!*/
 </style>

@@ -67,7 +67,7 @@
                 <el-col :span="15"><el-text :type="client1.states.rtc==='CONNECTED'?'success':'danger'">{{client1.states.rtc}}</el-text></el-col>
               </el-row>
               <el-row class="margin-row">
-                <el-col :span="9" style="max-width: 80px">rtc状态：</el-col>
+                <el-col :span="9" style="max-width: 80px">channel状态：</el-col>
                 <el-col :span="15"><el-text :type="client1.states.channel==='OPEN'?'success':'danger'">{{client1.states.channel}}</el-text></el-col>
               </el-row>
               <el-row class="margin-row">
@@ -135,7 +135,7 @@
                 <el-col :span="15"><el-text :type="client2.states.rtc==='CONNECTED'?'success':'danger'">{{client2.states.rtc}}</el-text></el-col>
               </el-row>
               <el-row class="margin-row">
-                <el-col :span="9" style="max-width: 80px">rtc状态：</el-col>
+                <el-col :span="9" style="max-width: 80px">channel状态：</el-col>
                 <el-col :span="15"><el-text :type="client2.states.channel==='OPEN'?'success':'danger'">{{client2.states.channel}}</el-text></el-col>
               </el-row>
               <el-row class="margin-row">
@@ -185,8 +185,37 @@
         </el-card>
       </el-col>
     </el-row>
-    
-  <el-button @click="test">test</el-button>
+
+    <p></p>
+
+    <el-row :gutter="6">
+      <el-col :span="12">
+        <el-card>
+          <el-row :gutter="4" class="margin-row">
+            <el-col :span="24" style="flex:1">
+              <el-input v-model="data.leftBase"></el-input>
+            </el-col>
+            <el-col :span="12" style="max-width:50px;min-width: 50px;">
+              <el-button type="primary" @click="browserLeftTree">浏览</el-button>
+            </el-col>
+          </el-row>
+        </el-card>
+      </el-col>
+      <el-col :span="12">
+        <el-card>
+          <el-row :gutter="4" class="margin-row">
+            <el-col :span="24" style="flex:1">
+              <el-input v-model="data.rightBase"></el-input>
+            </el-col>
+            <el-col :span="12" style="max-width:50px;min-width: 50px;">
+              <el-button type="primary" @click="browserRightTree">浏览</el-button>
+            </el-col>
+          </el-row>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <FileDiffv7 :lazy="true" :load-base-children="loadLeftLocal" :load-compared-children="loadRightRemote" :conf="rules.upload" ref="fileDiff"/>
   </div>
 </template>
 
@@ -194,19 +223,30 @@
 
 import {ElMessage, ElNotification} from "element-plus";
 import {Server,Client} from "@/frontEnd/v4/common/webrtc";
+import {Rule} from "@/backend/v4/core/module/fileDiff/fileDiff";
 import {nextTick, reactive} from "vue";
 import {time} from "@/frontEnd/v4/util/util";
+import {buildFileNode} from "@/frontEnd/v4/common/files";
+import { v4 as uuidv4 } from 'uuid';
+import FileDiffv7 from "@/frontEnd/v4/components/FileDiffv7.vue";
 
 export default {
+  components:{
+    FileDiffv7
+  },
   data() {
     return {
       server:null,
       client1:null,
       client2:null,
+      localClient:null,
       data:{
+        registerRequest:{},
         server:{text:'',msg:[]},
         client1:{text:'',msg:[]},
         client2:{text:'',msg:[]},
+        leftBase:'D:/Test/base',
+        rightBase:'D:/Test/compared',
       },
       state:{
         server:{ws:'CLOSED',web:'CLOSED'},
@@ -226,7 +266,21 @@ export default {
         server:{
           ws:{tls:true,port:2080}
         }
-
+      },
+      rules:{
+        upload:[
+            {base: 'D:/Test/base', relative: '', target: 'D:/Test/compared', mode: 'mapping'},
+            {base: 'D:/Test/base', relative: 'a.txt', target: 'D:/Test/compared/d.txt', mode: 'mapping',pruning:true},
+            //{base: 'D:/Test/compared/d.txt', relative: '', mode: 'incrementUpdate',dispatch:Rule.DISPATCH_TARGET},
+            {base: 'D:/Test/base/a/a.txt', relative: '', mode: 'increment'},
+            {base: 'D:/Test/base/c.txt', relative: '', mode: 'update'},
+            {base: 'D:/Test/base/b/bb', relative: '', mode: 'cover'},
+            {base: 'D:/Test/base/c', relative: '',target: 'D:/Test/compared/从', mode: 'mapping',pruning:true},
+            {base: 'D:/Test/compared/从', relative: '', mode: 'incrementUpdate',dispatch:Rule.DISPATCH_TARGET},
+            //{base: 'D:/Test/base', relative: 'b.txt', target: 'D:/Test/compared/d.txt', mode: 'mapping'},
+            //{base: 'D:/Test/compared', mode: 'increment'},
+        ],
+        download:{}
       }
     }
   },
@@ -235,7 +289,7 @@ export default {
       onWsServerMsg:(content)=>this.data.server.msg.push({...content,msgType:'ws'}),//({data})=>ElNotification({title:'ws服务端收到消息',message:data.text}),
       onWsServerMsgSend:(content)=>this.isMsg(content)&&this.data.server.msg.push({...content,msgType:'ws'})
     },this.clone(this.conf.server.ws)));
-    this.client1=reactive(new Client('client1',{
+    this.localClient=this.client1=reactive(new Client('client1',{
       onChannelMsg:(data,msg)=>this.data.client1.msg.push({data,msgType:'rtc',time:time(),from:this.client1.remoteClientID}),
       onWsMsg:(content)=>this.data.client1.msg.push({...content,msgType:'ws '}),//({data})=>ElNotification({title:'ws客户端1收到消息',message:data.text}),
       onWsMsgSend:(content)=>this.isMsg(content)&&this.data.client1.msg.push({...content,msgType:'ws'}),
@@ -254,6 +308,24 @@ export default {
       this.client2.sync();
     },1000);
 
+
+    setTimeout(()=>{
+      if(this.localClient.states.channel==='OPEN') {
+        this.browserRightTree();
+      }
+    },2000);
+    setTimeout(()=>{
+      if(this.localClient.states.channel==='OPEN') {
+        this.browserLeftTree();
+      }
+    },3000)
+
+    window.files.onFileStructReply(this.localClient.name,({struct,requestId})=>{
+      let callback=this.data.registerRequest[requestId];
+      if(callback){
+        callback(struct);
+      }
+    });
   },
   methods:{
     async test(){
@@ -267,7 +339,55 @@ export default {
     },
     clone(obj){
       return JSON.parse(JSON.stringify(obj));
-    }
+    },
+
+
+    //.浏览本地目录
+    async browserLeftTree(){
+      let struct=await this.localFile(this.data.leftBase);
+      this.$refs.fileDiff.setLeftTree(buildFileNode(struct),this.data.leftBase);
+    },
+
+    //.浏览远程目录
+    browserRightTree(){
+      this.remoteFile(this.data.rightBase,(struct)=>{
+        this.$refs.fileDiff.setRightTree(buildFileNode(struct),this.data.rightBase);
+      });
+    },
+
+    //. 加载本地子节点
+    async loadLeftLocal(node,resolve){
+      if (node.level === 0) {
+        return;//resolve([{ name: 'root' }])
+      }
+      let struct=await this.localFile(node.data.path);
+      resolve(buildFileNode(struct));
+    },
+
+    //. 加载远程子节点
+    async loadRightRemote(node,resolve){
+      if (node.level === 0) {
+        return;//resolve([{ name: 'root' }])
+      }
+      this.remoteFile(node.data.path,(struct)=>{
+        resolve(buildFileNode(struct));
+      });
+    },
+
+
+    //. 本地文件结构
+    async localFile(base){
+      let struct=await window.files.dir({base});
+      return await struct;
+    },
+
+    //. 远程文件结构
+    remoteFile(base,callback){
+      let id=uuidv4();
+      this.data.registerRequest[id]=callback;
+      window.files.remoteDir(this.localClient.name,{base,requestId:id});
+    },
+
   }
 }
 </script>

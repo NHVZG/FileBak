@@ -24,6 +24,7 @@
     "jszip": "^3.10.1",
     "node-turn": "^0.0.6",
     "reflect-metadata": "^0.1.13",
+    "uuid": "^9.0.1",
     "vue": "^3.2.13",
     "wrtc": "^0.4.7",
     "ws": "^8.13.0"
@@ -35,9 +36,9 @@
     "@babel/preset-env": "^7.21.4",
     "@vue/cli-plugin-babel": "~5.0.0",
     "@vue/cli-service": "~5.0.0",
-    "reflect-metadata": "^0.1.13",
     "electron": "^14.2.9",
     "electron-devtools-installer": "^3.1.0",
+    "reflect-metadata": "^0.1.13",
     "vue-cli-plugin-electron-builder": "~2.1.1"
   },
   "eslintConfig": {
