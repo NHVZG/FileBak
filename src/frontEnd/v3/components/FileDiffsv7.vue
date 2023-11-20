@@ -338,9 +338,9 @@ export default {
       let leftNodes=this.findBoxVisibleNode(this.$refs.leftTreeBox,this.$refs.leftTree);
       let midNodes=this.findBoxVisibleNode(this.$refs.midTreeBox,this.$refs.midTree);
 
-      let canvasConf=new DrawConf(parent.clientWidth,this.view.treeItemHeight,this.view.controlPanel.convergence)
-          .base(leftNodes,undefined,undefined,true)
-          .compared(midNodes,'left','left');
+      let canvasConf=new DrawConf(parent.clientWidth,this.view.treeItemHeight,this.view.controlPanel.convergence)   //, 绘制色块先取映射（mapping,normal)再取颜色规则
+          .base(leftNodes,undefined,undefined,true)   //, leftNodes 左树为源节点, 着色规则组名，映射规则组名 按默认获取（左树先遍历绘制色块）
+          .compared(midNodes,'left','left');       //, midNodes 为合并树节点，着色规则统一按左树关联规则，取左数规则组名，映射节点取与左树关联组名
       let s1=this.buildDrawStruct(canvasConf);
       this.drawCanvas(canvas,s1.structs1);
       this.drawCanvas(canvas,s1.structs2);
@@ -357,8 +357,8 @@ export default {
       let rightNodes=this.findBoxVisibleNode(this.$refs.rightTreeBox,this.$refs.rightTree);
 
       let canvasConf=new DrawConf(parent.clientWidth,this.view.treeItemHeight,this.view.controlPanel.convergence)
-          .base(midNodes,'left','right')
-          .compared(rightNodes,undefined,undefined,true);
+          .base(midNodes,'left','right')              //, midNodes 为合并树节点，着色规则统一按左树关联规则，取左数规则组名，映射节点取与右树关联组名（中树先遍历绘制色块）
+          .compared(rightNodes,undefined,undefined,true); //, rightNodes 右树为源节点, 着色规则，映射规则组名 按默认获取
       let s2=this.buildDrawStruct(canvasConf);
       this.drawCanvas(canvas,s2.structs1);
       this.drawCanvas(canvas,s2.structs2);
@@ -753,6 +753,7 @@ export default {
 }
 
 //% 绘制设置
+//,20231120105839.jpg
 class DrawConf{
   constructor(canvasWidth, listItemHeight,convergence) {
     this.canvasWidth=canvasWidth;                                                                    //, 画布宽度
@@ -912,8 +913,8 @@ class StructBuilder {
   constructor(comparedMap, mappingId, key,mappingKey, width, height, reversed,convergence) {
     this.comparedMap = comparedMap;                                                            //, 比较的集合
     this.mappingId = mappingId;                                                                       //, nodes集获取的键名[source,target]
-    this.key = key;                                                                                              //, 获取的规则组名
-    this.mappingKey = mappingKey;                                                                  //, 获取的规则组名
+    this.key = key;                                                                                              //, 基础获取的规则组名
+    this.mappingKey = mappingKey;                                                                  //, 映射获取的规则组名
     this.width = width;                                                                                       //,画布宽度
     this.height = height;                                                                                     //,列表项高度
     this.sets = new Set();                                                                                    //,已匹配到的compared节点

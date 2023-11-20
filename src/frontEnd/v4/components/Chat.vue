@@ -276,7 +276,7 @@ export default {
             {base: 'D:/Test/base/c.txt', relative: '', mode: 'update'},
             {base: 'D:/Test/base/b/bb', relative: '', mode: 'cover'},
             {base: 'D:/Test/base/c', relative: '',target: 'D:/Test/compared/从', mode: 'mapping',pruning:true},
-            {base: 'D:/Test/compared/从', relative: '', mode: 'incrementUpdate',dispatch:Rule.DISPATCH_TARGET},
+            {base: 'D:/Test/compared/从', relative: '', mode: 'increment',dispatch:Rule.DISPATCH_TARGET},
             //{base: 'D:/Test/base', relative: 'b.txt', target: 'D:/Test/compared/d.txt', mode: 'mapping'},
             //{base: 'D:/Test/compared', mode: 'increment'},
         ],

@@ -340,7 +340,8 @@ function mergeTree(baseTreeNode,                                                
         }
         mergeTree(child,compared,targetKey,mergeKey);
     }
-    baseTreeNode.children.sort((a,b)=>a.name.localeCompare(b.name));
+    baseTreeNode.children.sort((a,b)=>a.type===b.type?
+        a.name.localeCompare(b.name):a.type-b.type);
 }
 
 //. 初始化树结构+规则

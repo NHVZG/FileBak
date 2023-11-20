@@ -1,8 +1,8 @@
 <template>
 <!--  <TestIndex/> --> <!--v1-->
 <!--  <Index/>-->
-<!--  <IndexV3/>--> <!--v3-->
-  <IndexV4/>
+  <IndexV3/> <!--v3-->
+<!--  <IndexV4/>-->
 </template>
 
 <script>
@@ -47,6 +47,10 @@ export default {
   color: #2c3e50;
   margin-top: 60px;
 }
+.el-tree{
+  --el-tree-node-hover-bg-color:draked !important;
+}
+
 
 body {
   /*background-color: /#ff0000;*/
