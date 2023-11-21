@@ -1,8 +1,8 @@
 <template>
 <!--  <TestIndex/> --> <!--v1-->
 <!--  <Index/>-->
-  <IndexV3/> <!--v3-->
-<!--  <IndexV4/>-->
+<!--  <IndexV3/> --><!--v3-->
+  <IndexV4/>
 </template>
 
 <script>

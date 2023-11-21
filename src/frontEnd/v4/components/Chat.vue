@@ -191,6 +191,9 @@
     <el-row :gutter="6">
       <el-col :span="12">
         <el-card>
+          <el-row style="text-align: right">
+            <el-col :span="24"><el-icon :size="20" color="white" class="transport"><CaretRight /></el-icon></el-col>
+          </el-row>
           <el-row :gutter="4" class="margin-row">
             <el-col :span="24" style="flex:1">
               <el-input v-model="data.leftBase"></el-input>
@@ -203,6 +206,9 @@
       </el-col>
       <el-col :span="12">
         <el-card>
+          <el-row style="text-align: left">
+            <el-col :span="24"><el-icon :size="20" color="white" class="transport"><CaretLeft /></el-icon></el-col>
+          </el-row>
           <el-row :gutter="4" class="margin-row">
             <el-col :span="24" style="flex:1">
               <el-input v-model="data.rightBase"></el-input>
@@ -216,6 +222,8 @@
     </el-row>
 
     <FileDiffv7 :lazy="true" :load-base-children="loadLeftLocal" :load-compared-children="loadRightRemote" :conf="rules.upload" ref="fileDiff"/>
+
+    <FileDiffv7 :lazy="true" :load-base-children="loadLeftLocal" :load-compared-children="loadRightRemote" :conf="rules.upload" ref="fileDiff1"/>
   </div>
 </template>
 
@@ -241,12 +249,15 @@ export default {
       client2:null,
       localClient:null,
       data:{
+        type:true,
         registerRequest:{},
         server:{text:'',msg:[]},
         client1:{text:'',msg:[]},
         client2:{text:'',msg:[]},
-        leftBase:'D:/Test/base',
-        rightBase:'D:/Test/compared',
+        //leftBase:'D:/Test/base',
+        leftBase:'D:/Test/compared',
+        //rightBase:'D:/Test/compared',
+        rightBase:'D:/Test/base',
       },
       state:{
         server:{ws:'CLOSED',web:'CLOSED'},
@@ -341,19 +352,75 @@ export default {
       return JSON.parse(JSON.stringify(obj));
     },
 
+    //.跟换模式
+    onChangeType(){
+
+    },
 
     //.浏览本地目录
     async browserLeftTree(){
-      let struct=await this.localFile(this.data.leftBase);
-      this.$refs.fileDiff.setLeftTree(buildFileNode(struct),this.data.leftBase);
+      /*let struct=await this.localFile(this.data.leftBase);
+      this.$refs.fileDiff.setLeftTree(buildFileNode(struct),this.data.leftBase);*/
+      //await this.leftLocal();
+      this.leftRemote();
+      this.leftLocal1();
     },
 
     //.浏览远程目录
     browserRightTree(){
+      /*this.remoteFile(this.data.rightBase,(struct)=>{
+        this.$refs.fileDiff.setRightTree(buildFileNode(struct),this.data.rightBase);
+      });*/
+      //this.rightRemote();
+      this.rightLocal();
+      this.rightRemote1();
+    },
+
+    async leftLocal(){
+      let struct=await this.localFile(this.data.leftBase);
+      this.$refs.fileDiff.setLeftTree(buildFileNode(struct),this.data.leftBase,true);
+    },
+
+    leftRemote(){
+      this.remoteFile(this.data.leftBase,(struct)=>{
+        this.$refs.fileDiff.setLeftTree(buildFileNode(struct),this.data.leftBase);
+      });
+    },
+
+    async rightLocal(){
+      let struct=await this.localFile(this.data.rightBase);
+      this.$refs.fileDiff.setRightTree(buildFileNode(struct),this.data.rightBase,true);
+    },
+
+    rightRemote(){
       this.remoteFile(this.data.rightBase,(struct)=>{
         this.$refs.fileDiff.setRightTree(buildFileNode(struct),this.data.rightBase);
       });
     },
+
+
+    async leftLocal1(){
+      let struct=await this.localFile(this.data.rightBase);
+      this.$refs.fileDiff1.setLeftTree(buildFileNode(struct),this.data.rightBase,true);
+    },
+
+    leftRemote1(){
+      this.remoteFile(this.data.rightBase,(struct)=>{
+        this.$refs.fileDiff1.setLeftTree(buildFileNode(struct),this.data.rightBase);
+      });
+    },
+
+    async rightLocal1(){
+      let struct=await this.localFile(this.data.leftBase);
+      this.$refs.fileDiff1.setRightTree(buildFileNode(struct),this.data.leftBase,true);
+    },
+
+    rightRemote1(){
+      this.remoteFile(this.data.leftBase,(struct)=>{
+        this.$refs.fileDiff1.setRightTree(buildFileNode(struct),this.data.leftBase);
+      });
+    },
+
 
     //. 加载本地子节点
     async loadLeftLocal(node,resolve){
@@ -407,5 +474,8 @@ export default {
   text-align: left;
   border: 1px solid var(--el-border-color);
   padding: 1px
+}
+.transport{
+  cursor: pointer;background-color: #409EFF;border-radius: 100px
 }
 </style>

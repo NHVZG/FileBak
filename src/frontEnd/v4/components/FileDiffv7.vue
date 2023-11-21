@@ -66,11 +66,6 @@ export default {
   },
   data() {
     return {
-      start:0,
-      end:0,
-      leftTree:[],
-      rightTree:[],
-      midTree:[],
       view: {
         scrolling:{
           left:false,
@@ -102,14 +97,24 @@ export default {
           normal:{base:'white',list:['white'],stroke:'white'}
         }
       },
+      leftTree:[],
+      rightTree:[],
+      midTree:[],
 
-      letfBasePath:'',
+      leftBasePath:'',
       rightBasePath:'',
+
       leftRootNode:'',
       rightRootNode:'',
-      key:undefined,
+
       leftForest:null,
       rightForest:null,
+
+      key:undefined,    //, 源树默认规则（base，compared）
+
+      mainSide:'',
+      mainTree:[],
+      targetTree:[],
 
 
       /*conf: {
@@ -185,6 +190,10 @@ export default {
       }*/
     }
   },
+  //, mainTree：主树-上传时：本地目录树，下载时：远程目录树
+  //, targetTree：目标树-上传时：远程目录树，下载时：本地目录树
+  //, midTree：主树根据规则增改映射到目标树 合成的最终结果
+
   async mounted() {
     this.view.viewPortNodes=(this.view.boxHeight/this.view.treeItemHeight)+2;                //初始化可视节点数
     let canvas1=this.$refs.canvas1;
@@ -314,7 +323,8 @@ export default {
 
     loadLeftSub(elNode,resolve){
       this.loadBaseChildren(elNode,async (baseNodes)=>{
-        let {children,forest}=this.initSub(this.leftRootNode,elNode.data,baseNodes,initBaseRule(this.conf,this.key),this.leftForest);
+        let rules=this.leftTree===this.mainTree?initBaseRule(this.conf,this.key):initComparedRule(this.conf,this.key);
+        let {children,forest}=this.initSub(this.leftRootNode,elNode.data,baseNodes,rules,this.leftForest);
         this.initMidTree(forest,this.rightForest);
         resolve(children);
         await this.$nextTick(()=>{});
@@ -323,35 +333,50 @@ export default {
     },
     loadRightSub(elNode,resolve){
       this.loadBaseChildren(elNode,async (baseNodes)=>{
-        let {children,forest}=this.initSub(this.rightRootNode,elNode.data,baseNodes,initBaseRule(this.conf,this.key),this.rightForest);
+        let rules=this.rightTree===this.mainTree?initBaseRule(this.conf,this.key):initComparedRule(this.conf,this.key);
+        let {children,forest}=this.initSub(this.rightRootNode,elNode.data,baseNodes,rules,this.rightForest);
         this.initMidTree(this.leftForest,forest);
         resolve(children);
         await this.$nextTick(()=>{});
         this.onMidFilterChange(true);
       });
     },
-    async setLeftTree(baseNodes,basePath){
+    async setLeftTree(baseNodes,basePath,main=false){
       let {root,leaf,parent}=this.initRoot(basePath);
-      let {tree,forest}=this.init(root,leaf,baseNodes,initBaseRule(this.conf,this.key),basePath);
+      let rules=main?initBaseRule(this.conf,this.key):initComparedRule(this.conf,this.key);
+      let {tree,forest}=this.init(root,leaf,baseNodes,rules,basePath);
       this.initMidTree(forest,this.rightForest);
-      this.letfBasePath=basePath;
+      this.leftBasePath=basePath;
       this.leftRootNode=root;
       this.leftForest=forest;
       this.leftTree=tree;
+      if(main){
+        this.mainSide='left';
+        this.mainTree=tree;
+      }else{
+        this.targetTree=tree;
+      }
       await this.$nextTick(()=>{});
       this.onMidFilterChange(true);
       await this.$nextTick(()=>{});
       await this.onMidBoxScroll();
     },
-    async setRightTree(baseNodes,basePath){
+    async setRightTree(baseNodes,basePath,main=false){
       let {root,leaf,parent}=this.initRoot(basePath);
-      let {tree,forest}=this.init(root,leaf,baseNodes,initComparedRule(this.conf,this.key),basePath);
+      let rules=main?initBaseRule(this.conf,this.key):initComparedRule(this.conf,this.key);
+      let {tree,forest}=this.init(root,leaf,baseNodes,rules,basePath);
       this.initMidTree(this.leftForest,forest);
       this.onMidFilterChange(true);
       this.rightBasePath=basePath;
       this.rightRootNode=root;
       this.rightForest=forest;
       this.rightTree=tree;
+      if(main){
+        this.mainSide='right';
+        this.mainTree=tree;
+      }else{
+        this.targetTree=tree;
+      }
       await this.$nextTick(()=>{});
       this.onMidFilterChange(true);
       await this.$nextTick(()=>{});
@@ -363,7 +388,7 @@ export default {
       let midTree=new Node('root','',1);
       mergeTree(midTree,leftForest,'left','base');
       mergeTree(midTree,rightForest,'right','base');
-      let {match,nearest}=this.findNode(midTree,this.rightBasePath);
+      let {match,nearest}=this.findNode(midTree,this.mainSide==='left'?this.rightBasePath:this.leftBasePath);
       if(match){
         this.midTree=match.children;
       }
@@ -419,6 +444,19 @@ export default {
     getMergeClass(data,node){
       let left=data.rules.cur('left');
       let right=data.rules.cur('right');
+      let main=this.mainSide==='left'?left:right;
+      let target=this.mainSide==='right'?right:left;
+      if(main){
+        if(main.config.mode==='except'||main.config.mode==='increment'){
+          if(!target)return main.config.mode;
+        }
+        else if(main.config.mode!=='normal'){
+          return main.config.mode;
+        }
+      }
+      if(target)return target.config.mode;
+      /*let left=data.rules.cur('left');
+      let right=data.rules.cur('right');
       if(left){
         if(left.config.mode==='except'||left.config.mode==='increment'){
           if(!right)return left.config.mode;
@@ -427,7 +465,7 @@ export default {
           return left.config.mode;
         }
       }
-      if(right)return right.config.mode;
+      if(right)return right.config.mode;*/
 
       return 'normal';
     },
@@ -441,9 +479,12 @@ export default {
       let leftNodes=this.findBoxVisibleNode(this.$refs.leftTreeBox,this.$refs.leftTree);
       let midNodes=this.findBoxVisibleNode(this.$refs.midTreeBox,this.$refs.midTree);
 
+      /*let canvasConf=new DrawConf(parent.clientWidth,this.view.treeItemHeight,this.view.controlPanel.convergence)
+          .base(leftNodes,undefined,undefined,true)
+          .compared(midNodes,'left','left');*/
       let canvasConf=new DrawConf(parent.clientWidth,this.view.treeItemHeight,this.view.controlPanel.convergence)
           .base(leftNodes,undefined,undefined,true)
-          .compared(midNodes,'left','left');
+          .compared(midNodes,this.mainSide,'left');
       let s1=this.buildDrawStruct(canvasConf);
       this.drawCanvas(canvas,s1.structs1);
       this.drawCanvas(canvas,s1.structs2);
@@ -460,8 +501,11 @@ export default {
       let rightNodes=this.findBoxVisibleNode(this.$refs.rightTreeBox,this.$refs.rightTree);
 
       let canvasConf=new DrawConf(parent.clientWidth,this.view.treeItemHeight,this.view.controlPanel.convergence)
-          .base(midNodes,'left','right')
+          .base(midNodes,this.mainSide,'right')
           .compared(rightNodes,undefined,undefined,true);
+      /*let canvasConf=new DrawConf(parent.clientWidth,this.view.treeItemHeight,this.view.controlPanel.convergence)
+          .base(midNodes,'left','right')
+          .compared(rightNodes,undefined,undefined,true);*/
       let s2=this.buildDrawStruct(canvasConf);
       this.drawCanvas(canvas,s2.structs1);
       this.drawCanvas(canvas,s2.structs2);
@@ -620,7 +664,23 @@ export default {
       let left=data.rules.cur('left');
       let right=data.rules.cur('right');
 
-      if(left){
+      let main=this.mainSide==='left'?left:right;
+      let target=this.mainSide==='left'?right:left;
+
+      if(main){
+        if(main.config.mode==='except'&&(!right))return false;
+        if(main.config.mode==='update'&&(!right))return false;
+        if(main.config.mode==='normal'&&(!right))return false;
+      }
+      if(target){
+        if(target.config.mode==='remove')return false;
+        if(target.config.mode==='normal'&&(!node.parent.visible))return false;
+      }
+
+      let pM=node.parent.data?.rules?.cur?.(this.mainSide);
+      if(pM&&(!main)&&pM.config.mode==='cover'&&target)return false;
+
+      /*if(left){
         if(left.config.mode==='except'&&(!right))return false;
         if(left.config.mode==='update'&&(!right))return false;
         if(left.config.mode==='normal'&&(!right))return false;
@@ -631,7 +691,7 @@ export default {
       }
 
       let pLeft=node.parent.data?.rules?.cur?.('left');
-      if(pLeft&&(!left)&&pLeft.config.mode==='cover'&&right)return false;
+      if(pLeft&&(!left)&&pLeft.config.mode==='cover'&&right)return false;*/
       return true;
     },
 
@@ -655,6 +715,19 @@ export default {
             ctx.moveTo(s.points[0].x-offset, s.points[0].y);
             ctx.bezierCurveTo(s.points[0].x - radius, s.points[0].y, s.points[1].x + radius, s.points[1].y, s.points[1].x, s.points[1].y);
             ctx.bezierCurveTo(s.points[1].x + radius, s.points[1].y, s.points[2].x - radius, s.points[2].y, s.points[2].x-offset, s.points[2].y);
+          }else if (s.points.length === 4) {
+            ctx.moveTo(s.points[0].x+offset, s.points[0].y);
+            ctx.bezierCurveTo(s.points[0].x + radius, s.points[0].y, s.points[1].x - radius, s.points[1].y, s.points[1].x-offset, s.points[1].y);
+            ctx.lineTo(s.points[2].x-offset, s.points[2].y);
+            ctx.bezierCurveTo(s.points[2].x - radius, s.points[2].y, s.points[3].x + radius, s.points[3].y, s.points[3].x+offset, s.points[3].y);
+
+            if(s.mode!==s.comparedMode&&s.mode!=='normal'&&s.comparedMode!=='normal'&&this.view.controlPanel.linearGradient){
+              //let grd=ctx.createLinearGradient(30,0,128,0);
+              let grd=ctx.createLinearGradient(s.points[0].x+radius,s.points[0].y+radius,s.points[2].x-radius,s.points[2].y-radius);
+              grd.addColorStop(0,this.view.styles[s.mode].list[0]);
+              grd.addColorStop(1,this.view.styles[s.comparedMode].list[0]);
+              ctx.fillStyle=grd;
+            }
           }
         }else {
           if (s.points.length === 3) {
@@ -924,7 +997,7 @@ class StructBuilder {
         .map(r=>{
           let {compared,pCompared}=this.getCompares(r);
           if(!compared&&(!pCompared))return null;
-          if(compared) this.sets.add(compared.id);
+          if(compared&&cur.config.mode!=='normal') this.sets.add(compared.id);
           let struct=new Struct(
               cur.config.mode==='mapping'?r:cur,                                  //,  着色规则为mapping则用mapping：否则按其他规则着色
               r,
@@ -957,7 +1030,7 @@ class StructBuilder {
       if(struct.ends(baseItem,compared,pCompared)){
         if(struct.build())res.push(struct);
       }
-      if(compared){
+      if(compared&&struct.mode!=='normal'){
         this.sets.add(compared.id);
       }
     }
