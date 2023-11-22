@@ -221,9 +221,16 @@
       </el-col>
     </el-row>
 
+    <el-row>
+      <el-col :span="24">
     <FileDiffv7 :lazy="true" :load-base-children="loadLeftLocal" :load-compared-children="loadRightRemote" :conf="rules.upload" ref="fileDiff"/>
-
+      </el-col>
+    </el-row>
+<!--    <el-row>
+      <el-col :span="24">
     <FileDiffv7 :lazy="true" :load-base-children="loadLeftLocal" :load-compared-children="loadRightRemote" :conf="rules.upload" ref="fileDiff1"/>
+      </el-col>
+    </el-row>-->
   </div>
 </template>
 
@@ -282,6 +289,7 @@ export default {
         upload:[
             {base: 'D:/Test/base', relative: '', target: 'D:/Test/compared', mode: 'mapping'},
             {base: 'D:/Test/base', relative: 'a.txt', target: 'D:/Test/compared/d.txt', mode: 'mapping',pruning:true},
+            {base: 'D:/Test/base/b', relative: 'a.bmp', target: 'D:/Test/compared/x.txt', mode: 'mapping',pruning:true},
             //{base: 'D:/Test/compared/d.txt', relative: '', mode: 'incrementUpdate',dispatch:Rule.DISPATCH_TARGET},
             {base: 'D:/Test/base/a/a.txt', relative: '', mode: 'increment'},
             {base: 'D:/Test/base/c.txt', relative: '', mode: 'update'},
@@ -351,6 +359,10 @@ export default {
     clone(obj){
       return JSON.parse(JSON.stringify(obj));
     },
+    formatPath(path){
+      return path.endsWith('/')?path.slice(0,path.length-1):path;
+    },
+
 
     //.跟换模式
     onChangeType(){
@@ -359,65 +371,38 @@ export default {
 
     //.浏览本地目录
     async browserLeftTree(){
-      /*let struct=await this.localFile(this.data.leftBase);
-      this.$refs.fileDiff.setLeftTree(buildFileNode(struct),this.data.leftBase);*/
-      //await this.leftLocal();
       this.leftRemote();
-      this.leftLocal1();
     },
 
     //.浏览远程目录
     browserRightTree(){
-      /*this.remoteFile(this.data.rightBase,(struct)=>{
-        this.$refs.fileDiff.setRightTree(buildFileNode(struct),this.data.rightBase);
-      });*/
-      //this.rightRemote();
       this.rightLocal();
-      this.rightRemote1();
     },
 
-    async leftLocal(){
-      let struct=await this.localFile(this.data.leftBase);
-      this.$refs.fileDiff.setLeftTree(buildFileNode(struct),this.data.leftBase,true);
-    },
+
+    //` ===== 上传（左本地右远程）
 
     leftRemote(){
       this.remoteFile(this.data.leftBase,(struct)=>{
-        this.$refs.fileDiff.setLeftTree(buildFileNode(struct),this.data.leftBase);
+        this.$refs.fileDiff.setLeftTree(buildFileNode(struct),this.formatPath(this.data.leftBase));
       });
     },
 
     async rightLocal(){
       let struct=await this.localFile(this.data.rightBase);
-      this.$refs.fileDiff.setRightTree(buildFileNode(struct),this.data.rightBase,true);
+      this.$refs.fileDiff.setRightTree(buildFileNode(struct),this.formatPath(this.data.rightBase),true);
+    },
+
+    //` ====== 下载（左本地右远程）
+
+    async leftLocal(){
+      let struct=await this.localFile(this.data.leftBase);
+      this.$refs.fileDiff.setLeftTree(buildFileNode(struct),this.formatPath(this.data.leftBase),true);
     },
 
     rightRemote(){
       this.remoteFile(this.data.rightBase,(struct)=>{
-        this.$refs.fileDiff.setRightTree(buildFileNode(struct),this.data.rightBase);
-      });
-    },
-
-
-    async leftLocal1(){
-      let struct=await this.localFile(this.data.rightBase);
-      this.$refs.fileDiff1.setLeftTree(buildFileNode(struct),this.data.rightBase,true);
-    },
-
-    leftRemote1(){
-      this.remoteFile(this.data.rightBase,(struct)=>{
-        this.$refs.fileDiff1.setLeftTree(buildFileNode(struct),this.data.rightBase);
-      });
-    },
-
-    async rightLocal1(){
-      let struct=await this.localFile(this.data.leftBase);
-      this.$refs.fileDiff1.setRightTree(buildFileNode(struct),this.data.leftBase,true);
-    },
-
-    rightRemote1(){
-      this.remoteFile(this.data.leftBase,(struct)=>{
-        this.$refs.fileDiff1.setRightTree(buildFileNode(struct),this.data.leftBase);
+        this.$refs.fileDiff.setRightTree(buildFileNode(struct),this.formatPath(this.data.rightBase));
       });
     },
 

@@ -13,7 +13,7 @@
                     <el-icon v-if="data.type===4"><Box /></el-icon>
           <!--</el-text>-->
                 <!-- <span class="node-text"><span><span style="background-color: #a5eecc">{{node.id}}</span>-{{ node.label }}</span></span>                -->
-                 <el-popover placement="right-end" :width="500" trigger="hover"  effect="dark" :hide-after="100" popper-style="font-size:1px" :disabled="false">
+                 <el-popover placement="right-end" :width="500" trigger="hover"  effect="dark" :hide-after="100" popper-style="font-size:1px" :disabled="true">
                     <template #reference>
                         <span class="node-text"><span><span style="background-color: #a5eecc">{{node.id}}</span>-{{ node.label }}</span></span>
                     </template>

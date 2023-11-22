@@ -39,7 +39,7 @@ async function dir(base) {
     }
     let typeMap={};
     return fs.readdirSync(base).map(f=>{
-        let filepath=base+'/'+f;
+        let filepath=base+(base.endsWith('/')?'':'/')+f;
         let info;
         try {
             info = fs.lstatSync(filepath);

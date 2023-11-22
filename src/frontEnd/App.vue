@@ -58,6 +58,7 @@ body {
 .increment{
   /*background-color: #bbf9a2;*/
   background-color: v-bind('view.styles.increment.base');
+  /*border-bottom: 1px v-bind('view.styles.increment.stroke') solid;*/
 }
 .incrementUpdate{
   /*background-color: #a2f9eb;*/

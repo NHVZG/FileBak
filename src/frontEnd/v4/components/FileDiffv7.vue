@@ -1,6 +1,6 @@
 <template>
 
-<!--    <el-switch active-text="合并后" inactive-text="全部节点"  v-model="view.controlPanel.midFilterMode" @change="onMidFilterChange"></el-switch>&nbsp;-->
+<!--    <el-switch active-text="合并后" inactive-text="全部节点"  v-model="view.controlPanel.midFilterMode" @change="onClickMidFilterChange"></el-switch>&nbsp;-->
   <el-switch active-text="收敛" inactive-text="发散"  v-model="view.controlPanel.convergence" @change="onMidBoxScroll"></el-switch>&nbsp;
   <el-switch active-text="渐变" inactive-text="单色"  v-model="view.controlPanel.linearGradient" @change="onMidBoxScroll"></el-switch>&nbsp;
   <el-switch active-text="同步" inactive-text="独立"  v-model="view.controlPanel.scrollSync" @change="onMidBoxScroll"></el-switch>
@@ -10,28 +10,28 @@
   <el-row>
     <el-col :span="7">
       <el-scrollbar :height="view.boxHeight" @scroll="onLeftBoxScroll" class="box left-scroll" ref="leftTreeBox"><!--替换原生滚动块，达到无缝-->
-        <FileTree :tree-data="leftTree" ref="leftTree" :on-tree-item-class="leftTreeItemClass" :lazy="lazy" :load="loadLeftSub" :expand="onLeftExpand"></FileTree>
+        <FileTree :tree-data="left.tree" ref="leftTree" :on-tree-item-class="leftTreeItemClass" :lazy="lazy" :load="loadLeftSub" :expand="onLeftExpand"></FileTree>
       </el-scrollbar>
     </el-col>
     <el-col :span="2">
       <div><!--style="height: 100%"--><!--100%会导致画布拉长，绘制出现偏差-->
-        <canvas ref="canvas1" style="height: 100%;width:100%"></canvas>
+        <canvas ref="canvas1" style="height: 600px;width:100%"></canvas>
       </div>
     </el-col>
     <el-col :span="6">
       <el-scrollbar :height="view.boxHeight" @scroll="onMidBoxScroll" class="box left-scroll" ref="midTreeBox">
         <!--   :on-register-node="onRegisterNode"     -->
-        <FileTree :tree-data="midTree" ref="midTree" :on-tree-item-class="midTreeItemClass"  :filter-node="filterMidTree" :expand="onMidExpand" :expand-all="true"></FileTree>
+        <FileTree :tree-data="mid.tree" ref="midTree" :on-tree-item-class="midTreeItemClass"  :filter-node="filterMidTree" :expand="onMidExpand" :expand-all="true"></FileTree>
       </el-scrollbar>
     </el-col>
     <el-col :span="2">
       <div ><!--style="height: 100%"-->
-        <canvas ref="canvas2" style="height: 100%;width:100%"></canvas>
+        <canvas ref="canvas2" style="height: 600px;width:100%"></canvas>
       </div>
     </el-col>
     <el-col :span="7">
       <el-scrollbar :height="view.boxHeight" @scroll="onRightBoxScroll" class="box left-scroll" ref="rightTreeBox">
-        <FileTree :tree-data="rightTree" ref="rightTree" :on-tree-item-class="rightTreeItemClass" :lazy="lazy" :load="loadRightSub" :expand="onRightExpand"></FileTree>
+        <FileTree :tree-data="right.tree" ref="rightTree" :on-tree-item-class="rightTreeItemClass" :lazy="lazy" :load="loadRightSub" :expand="onRightExpand"></FileTree>
       </el-scrollbar>
     </el-col>
 
@@ -81,7 +81,7 @@ export default {
         boxHeight: 600,
         treeItemHeight:26,
         controlPanel:{
-          midFilterMode:false,                                                                               //, 过滤
+          midFilterMode:true,                                                                               //, 过滤
           convergence:false,                                                                                  //, 收敛
           linearGradient:true,                                                                                 //, 线性渐变
           scrollSync:true                                                                                        //, 滚动同步
@@ -97,25 +97,26 @@ export default {
           normal:{base:'white',list:['white'],stroke:'white'}
         }
       },
-      leftTree:[],
-      rightTree:[],
-      midTree:[],
-
-      leftBasePath:'',
-      rightBasePath:'',
-
-      leftRootNode:'',
-      rightRootNode:'',
-
-      leftForest:null,
-      rightForest:null,
 
       key:undefined,    //, 源树默认规则（base，compared）
 
-      mainSide:'',
-      mainTree:[],
-      targetTree:[],
-
+      left:{
+        tree:[],            //, 渲染树
+        side:'left',       //, 左边标识
+        basePath:'',    //, 基础路径
+        forest:[]         //, 所有森林
+      },
+      right:{
+        tree:[],
+        side:'right',
+        basePath:'',
+        forest:[]
+      },
+      mid:{
+        tree:[],
+      },
+      main:{forest:[],rules:null},
+      opposite :{forest:[],rules:null}
 
       /*conf: {
         upload: {
@@ -190,11 +191,14 @@ export default {
       }*/
     }
   },
-  //, mainTree：主树-上传时：本地目录树，下载时：远程目录树
-  //, targetTree：目标树-上传时：远程目录树，下载时：本地目录树
+  //, left: 物理左边
+  //, right: 物理左边
+  //, main：主边-上传时：本地目录树，下载时：远程目录树 (一般 左本地，右远程)
+  //, opposite ：主边对应的另一边-上传时：远程目录树，下载时：本地目录树
   //, midTree：主树根据规则增改映射到目标树 合成的最终结果
 
   async mounted() {
+    this.onMidFilterChange(true);
     this.view.viewPortNodes=(this.view.boxHeight/this.view.treeItemHeight)+2;                //初始化可视节点数
     let canvas1=this.$refs.canvas1;
     let canvas2=this.$refs.canvas2;
@@ -211,211 +215,116 @@ export default {
       canvas2.width=parent2.clientWidth;
       this.onMidBoxScroll();
     }
+    this.main.rules=()=>initBaseRule(this.conf,this.key);                     //, 规则生成方法
+    this.opposite.rules=()=>initComparedRule(this.conf,this.key);
   },
 
   methods:{
-    async refresh_demo(){
-      //, 组名
-      let key=undefined;
-      //, 基础树
-      let leftBaseTree = this.leftTree;
-      let rightBaseTree = this.rightTree;
-      //, 基础树结构
-      let leftPb={children:leftBaseTree,rules:new RuleBundle()};
-      let rightPb={children:rightBaseTree,rules:new RuleBundle()};
-      //, 基础树结构完整转换
-      let leftBaseNodeParent=new Node();
-      let rightBaseNodeParent=new Node();
-      //, 映射树容器
-      //let leftForest=new Node('root',this.leftBasePath,1);
-      //let rightForest=new Node('root',this.rightBasePath,1);
-      let leftForest=new Node('root','',1);
-      let rightForest=new Node('root','',1);
-      //, 父节点
-      let leftPns=[{root:leftForest,node:leftForest}]
-      let rightPns=[{root:rightForest,node:rightForest}];
-      //, 规则
-      let rule=this.conf;
-      let leftRules={
-        maps:new RuleBundle(rule.filter(r=>r.mode==='mapping').map(r=>new RuleItem().from(r)),key),
-        checks:new RuleBundle(rule.filter(r=>r.mode!=='mapping'&&r.mode!=='remove').map(r=>new RuleItem().from(r)),key)
-      };
-      let rightRules={
-        maps:new RuleBundle(),
-        checks:new RuleBundle(rule.filter(r=>r.mode==='remove').map(r=>new RuleItem().from(r)),key)
-      };
-
-      trees(leftPb,leftPns,leftForest,leftBaseNodeParent,leftRules,key);
-      trees(rightPb,rightPns,rightForest,rightBaseNodeParent,rightRules,key);
-
-      let midTree=new Node('root','',1);
-      mergeTree(midTree,leftForest,'left','base');
-      mergeTree(midTree,rightForest,'right','base');
-
-      this.leftTree=leftBaseNodeParent.children;
-      this.rightTree=rightBaseNodeParent.children;
-      this.midTree=midTree.children;
-
-      await this.$nextTick(()=>{});
-
-      //this.view.controlPanel.midFilterMode=true;
-      this.onMidFilterChange(true);
-
-
-      await this.$nextTick();
-
-
-      let canvas1=this.$refs.canvas1;
-      let canvas2=this.$refs.canvas2;
-      let parent1=canvas1.parentElement;
-      let parent2=canvas2.parentElement;
-      //canvas1.height=parent1.clientHeight;
-      //canvas2.height=parent2.clientHeight;
-      canvas1.width=parent1.clientWidth;
-      canvas1.height=this.view.boxHeight;
-      canvas2.width=parent2.clientWidth;
-      canvas2.height=this.view.boxHeight;
-      this.view.viewPortNodes=(this.view.boxHeight/this.view.treeItemHeight)+2;                //初始化可视节点数
-
-      window.onresize=()=>{
-        let parent1=canvas1.parentElement;
-        let parent2=canvas2.parentElement;
-        canvas1.width=parent1.clientWidth;
-        canvas2.width=parent2.clientWidth;
-        this.onMidBoxScroll();
-      }
-      await this.onMidBoxScroll();
-    },
-
-
+    //. 刷新
     async refresh(){
       this.initMidTree(this.leftForest,this.rightForest);
       await this.$nextTick(()=>{});
       await this.onMidBoxScroll();
     },
 
-
-    //, absolutRoot 绝对根路径（D:或者 /)
-    //, relativeRoot 相对根路径
-    init(absolutRoot,relativeRoot,relativeSubBaseNodes,rules,basePath){
-      relativeRoot.addNode(relativeSubBaseNodes);
-      let pb={children:[absolutRoot],rules:new RuleBundle()};
-      let baseNodeParent=new Node();
-      let forest=new Node('root','',1);
-      let pns=[{root:forest,node:forest}]; //, forest 是pn中的一支
-      trees(pb,pns,forest,baseNodeParent,rules,this.key);
-      let {match,nearest}=this.findNode(baseNodeParent,basePath);
-      return {tree:match.children,forest}
-    },
-    initSub(absolutRoot,relativeRoot,relativeSubBaseNodes,rules,forest){
-      let pnNode=new Node().from(relativeRoot);
-      let pb=new Node().from(relativeRoot);
-      pb.addNode(relativeSubBaseNodes);
-
-      //let pns=[{root:absolutRoot,node:pnNode}];
-      let parentNode=new Node().from(relativeRoot);
-      parentNode.rules.append(relativeRoot.rules,relativeRoot.rules.mainKey,false);
-      pnNode.rules.append(relativeRoot.rules,relativeRoot.rules.mainKey,false);
-      trees(pb,relativeRoot.pns,forest,parentNode,rules,this.key);
-
-      return {children:parentNode.children,forest};
-    },
-
-    loadLeftSub(elNode,resolve){
-      this.loadBaseChildren(elNode,async (baseNodes)=>{
-        let rules=this.leftTree===this.mainTree?initBaseRule(this.conf,this.key):initComparedRule(this.conf,this.key);
-        let {children,forest}=this.initSub(this.leftRootNode,elNode.data,baseNodes,rules,this.leftForest);
-        this.initMidTree(forest,this.rightForest);
-        resolve(children);
-        await this.$nextTick(()=>{});
-        this.onMidFilterChange(true);
-      });
-    },
-    loadRightSub(elNode,resolve){
-      this.loadBaseChildren(elNode,async (baseNodes)=>{
-        let rules=this.rightTree===this.mainTree?initBaseRule(this.conf,this.key):initComparedRule(this.conf,this.key);
-        let {children,forest}=this.initSub(this.rightRootNode,elNode.data,baseNodes,rules,this.rightForest);
-        this.initMidTree(this.leftForest,forest);
-        resolve(children);
-        await this.$nextTick(()=>{});
-        this.onMidFilterChange(true);
-      });
-    },
+    //. 设置左树
     async setLeftTree(baseNodes,basePath,main=false){
-      let {root,leaf,parent}=this.initRoot(basePath);
-      let rules=main?initBaseRule(this.conf,this.key):initComparedRule(this.conf,this.key);
-      let {tree,forest}=this.init(root,leaf,baseNodes,rules,basePath);
-      this.initMidTree(forest,this.rightForest);
-      this.leftBasePath=basePath;
-      this.leftRootNode=root;
-      this.leftForest=forest;
-      this.leftTree=tree;
-      if(main){
-        this.mainSide='left';
-        this.mainTree=tree;
-      }else{
-        this.targetTree=tree;
-      }
-      await this.$nextTick(()=>{});
-      this.onMidFilterChange(true);
-      await this.$nextTick(()=>{});
-      await this.onMidBoxScroll();
+      await this.setTree(basePath,baseNodes,this.left,main);
     },
+    //. 设置右树
     async setRightTree(baseNodes,basePath,main=false){
-      let {root,leaf,parent}=this.initRoot(basePath);
-      let rules=main?initBaseRule(this.conf,this.key):initComparedRule(this.conf,this.key);
-      let {tree,forest}=this.init(root,leaf,baseNodes,rules,basePath);
-      this.initMidTree(this.leftForest,forest);
-      this.onMidFilterChange(true);
-      this.rightBasePath=basePath;
-      this.rightRootNode=root;
-      this.rightForest=forest;
-      this.rightTree=tree;
-      if(main){
-        this.mainSide='right';
-        this.mainTree=tree;
-      }else{
-        this.targetTree=tree;
-      }
-      await this.$nextTick(()=>{});
-      this.onMidFilterChange(true);
-      await this.$nextTick(()=>{});
-      await this.onMidBoxScroll();
+      await this.setTree(basePath,baseNodes,this.right,main);
     },
-    initMidTree(leftForest=new Node(),rightForest=new Node()){
-      leftForest=leftForest||new Node();
-      rightForest=rightForest||new Node();
-      let midTree=new Node('root','',1);
-      mergeTree(midTree,leftForest,'left','base');
-      mergeTree(midTree,rightForest,'right','base');
-      let {match,nearest}=this.findNode(midTree,this.mainSide==='left'?this.rightBasePath:this.leftBasePath);
-      if(match){
-        this.midTree=match.children;
-      }
+    //. 加载左数子节点
+    loadLeftSub(elNode,resolve){
+      this.loadBaseChildren(elNode,async (baseNodes)=>this.loadTree(elNode.data,baseNodes,resolve,this.left));
     },
-    initRoot(basePath){
-      if(!basePath&&basePath==='/'){
-        let root=new Node();
-        return {root,leaf:root,parent:root};
-      }
-      return treeByPath(basePath, FILE_TYPE.DIRECTORY, false);
+    //. 加载右数子节点
+    loadRightSub(elNode,resolve){
+      this.loadComparedChildren(elNode,async (baseNodes)=>this.loadTree(elNode.data,baseNodes,resolve,this.right));
     },
-
-
+    //. 左展开
     onLeftExpand(){
       setTimeout(()=>{
         this.onMidBoxScroll();
-      },350);
+      },450);
     },
+    //. 中展开
     onMidExpand(){
       setTimeout(()=>{
         this.onMidBoxScroll();
-      },350);
+      },450);
     },
+    //. 右展开
     onRightExpand(){
       setTimeout(()=>{
         this.onMidBoxScroll();
-      },350);
+      },450);
+    },
+
+
+    //. 设置树
+    async setTree(basePath,baseNodes,side,main=false){
+      let root,leaf,parent;
+      if(!basePath&&basePath==='/'){
+        root=leaf=parent=new Node();
+      }else{
+        ({root,leaf,parent}=treeByPath(basePath, FILE_TYPE.DIRECTORY, false));
+      }
+      leaf.addNode(baseNodes);
+
+      side.generateRules= main?
+          ()=>initBaseRule(this.conf,this.key):
+          ()=>initComparedRule(this.conf,this.key);
+      side.forest=new Node('root','',1);
+      side.basePath=basePath;
+      side.root=root;
+
+      let baseNodeParent=new Node();
+      let pb={children:[root],rules:new RuleBundle()};
+      let pns=[{root:side.forest,node:side.forest}]; //, forest 是pn中的一支
+
+      trees(pb,pns,side.forest,baseNodeParent,side.generateRules(),this.key);
+      let {match,nearest}=this.findNode(baseNodeParent,basePath);
+      side.tree=match.children;
+      if(main){
+        this.main=side;
+      }else{
+        this.opposite=side;
+      }
+      this.initMidTree();
+      await this.$nextTick(()=>{});
+      this.onMidFilterChange(true);
+      await this.$nextTick(()=>{});
+      await this.onMidBoxScroll();
+    },
+
+    //. 加载子节点
+    async loadTree(parentNode,baseNodes,resolve,side){
+      let parentNodeCopy=new Node().from(parentNode);
+      let pnNode=new Node().from(parentNode);
+      let pb=new Node().from(parentNode);
+      pb.addNode(baseNodes);
+      pnNode.rules.append(parentNode.rules,this.key,false);
+      parentNodeCopy.rules.append(parentNode.rules,this.key,false);
+      //let pns=[{root:absolutRoot,node:pnNode}];
+      trees(pb,parentNode.pns,side.forest,parentNodeCopy,side.generateRules(),this.key);
+      this.initMidTree();
+      resolve(parentNodeCopy.children);
+      await this.$nextTick(()=>{});
+      this.onMidFilterChange(true);
+    },
+
+    //.合成中树
+    initMidTree(){
+      let basePath=this.opposite.basePath;
+      let midTree=new Node('root','',1);
+      mergeTree(midTree,this.left.forest,'left','base');
+      mergeTree(midTree,this.right.forest,'right','base');
+      let {match,nearest}=this.findNode(midTree,basePath||'/');
+      if(match){
+        this.mid.tree=match.children;
+      }
     },
 
 
@@ -423,13 +332,15 @@ export default {
 
 
     leftTreeItemClass(data,node) {
-      data.style=this.getBaseClass(data,node)||'normal';
-      return data.style;
+      let styles=this.getBaseClass(data,node)||'normal';
+      data.style=styles.cur;
+      return styles.relate||data.style;
     },
 
     rightTreeItemClass(data,node) {
-      data.style=this.getBaseClass(data,node)||'normal'
-      return data.style;
+      let styles=this.getBaseClass(data,node)||'normal'
+      data.style=styles.cur;
+      return styles.relate||data.style;
     },
 
     midTreeItemClass(data,node) {
@@ -438,14 +349,22 @@ export default {
     },
 
     getBaseClass(data,node){
-      return data?.rules?.cur?.()?.config?.mode||'normal';
+      let cur=data?.rules?.cur?.()?.config?.mode;                                                   //, 如果源节点（左树，右树）无着色规则，中树存在着色规则则取中树
+      if(!cur||cur==='normal') {
+        let ruleList = data?.rules?.get?.() || [];
+        let normal = ruleList.find(x => x.config.mode === 'normal');
+        if (normal && normal?.nodes?.target) {
+          let targetCur = normal.nodes.target?.rules?.cur?.(this.main.side);
+          if (targetCur&&targetCur.config.mode&&targetCur.config.mode!=='mapping') return {relate:targetCur.config.mode,cur:cur||'normal'};
+        }
+      }
+      return {cur:cur||'normal'};
+      //return data?.rules?.cur?.()?.config?.mode||'normal';
     },
 
     getMergeClass(data,node){
-      let left=data.rules.cur('left');
-      let right=data.rules.cur('right');
-      let main=this.mainSide==='left'?left:right;
-      let target=this.mainSide==='right'?right:left;
+      let main=data.rules.cur(this.main.side);
+      let target=data.rules.cur(this.opposite.side);
       if(main){
         if(main.config.mode==='except'||main.config.mode==='increment'){
           if(!target)return main.config.mode;
@@ -455,17 +374,6 @@ export default {
         }
       }
       if(target)return target.config.mode;
-      /*let left=data.rules.cur('left');
-      let right=data.rules.cur('right');
-      if(left){
-        if(left.config.mode==='except'||left.config.mode==='increment'){
-          if(!right)return left.config.mode;
-        }
-        else if(left.config.mode!=='normal'){
-          return left.config.mode;
-        }
-      }
-      if(right)return right.config.mode;*/
 
       return 'normal';
     },
@@ -479,12 +387,10 @@ export default {
       let leftNodes=this.findBoxVisibleNode(this.$refs.leftTreeBox,this.$refs.leftTree);
       let midNodes=this.findBoxVisibleNode(this.$refs.midTreeBox,this.$refs.midTree);
 
-      /*let canvasConf=new DrawConf(parent.clientWidth,this.view.treeItemHeight,this.view.controlPanel.convergence)
-          .base(leftNodes,undefined,undefined,true)
-          .compared(midNodes,'left','left');*/
       let canvasConf=new DrawConf(parent.clientWidth,this.view.treeItemHeight,this.view.controlPanel.convergence)
           .base(leftNodes,undefined,undefined,true)
-          .compared(midNodes,this.mainSide,'left');
+          .compared(midNodes,this.main.side,'left')
+          .l2r();
       let s1=this.buildDrawStruct(canvasConf);
       this.drawCanvas(canvas,s1.structs1);
       this.drawCanvas(canvas,s1.structs2);
@@ -501,11 +407,9 @@ export default {
       let rightNodes=this.findBoxVisibleNode(this.$refs.rightTreeBox,this.$refs.rightTree);
 
       let canvasConf=new DrawConf(parent.clientWidth,this.view.treeItemHeight,this.view.controlPanel.convergence)
-          .base(midNodes,this.mainSide,'right')
-          .compared(rightNodes,undefined,undefined,true);
-      /*let canvasConf=new DrawConf(parent.clientWidth,this.view.treeItemHeight,this.view.controlPanel.convergence)
-          .base(midNodes,'left','right')
-          .compared(rightNodes,undefined,undefined,true);*/
+          .compared(midNodes,this.main.side,'right')
+          .base(rightNodes,undefined,undefined,true)
+          .r2l();
       let s2=this.buildDrawStruct(canvasConf);
       this.drawCanvas(canvas,s2.structs1);
       this.drawCanvas(canvas,s2.structs2);
@@ -560,7 +464,8 @@ export default {
     //. 根据可视节点+路径 查找其他树的对应节点位置
     findNodeByPath(map,trees){
       if(trees.length===0)return {};
-      for(let obj of Object.values(map)){
+      for(let entry of map.entries()){
+        let obj=entry[1];
         if(obj.y<0)continue;
         let path=obj.node.data.path;
         let res=[];
@@ -579,12 +484,18 @@ export default {
       let xxx={};                                                                                                   //, 左中右列表公有节点集合
       let xxo={};                                                                                                   //, 左中列表公有节点集合
       let oxx={};                                                                                                   //, 中右列表公有节点集合
-      let midMap=Object.values(mid).reduce((o,x)=>({...o,[x.node.data.path]:x}),{});
-      for(let n of Object.entries(left)){
+      //let midMap=mid.entries().reduce((o,x)=>({...o,[x.node.data.path]:x}),{});
+      let midMap={}
+      for(let entry of mid.entries()){
+        let x=entry[1];
+        midMap[x.node.data.path]=x;
+      }
+
+      for(let n of left.entries()){
         let m=midMap[n[1].node.data.path];
         if(m)xxo[n[1].node.data.path]={left:n[1],mid:m};
       }
-      for(let n of Object.entries(right)){
+      for(let n of right.entries()){
         let l=xxo[n[1].node.data.path];
         if(l){
           l.right=n[1];
@@ -653,45 +564,37 @@ export default {
     },
 
     //. 节点过滤触发事件
-    onMidFilterChange(type){
+    async onMidFilterChange(type){
       this.$refs.midTree.filter(type);
+    },
+
+    async onClickMidFilterChange(type){
+      this.onMidFilterChange(type);
+      await this.$nextTick(()=>{});
+      this.onMidBoxScroll();
     },
 
     //. 过滤节点
     filterMidTree(param,data,node){
       if(!param)return true;
 
-      let left=data.rules.cur('left');
-      let right=data.rules.cur('right');
 
-      let main=this.mainSide==='left'?left:right;
-      let target=this.mainSide==='left'?right:left;
+      let main=data.rules.cur(this.main.side);
+      let opposite=data.rules.cur(this.opposite.side);
 
       if(main){
-        if(main.config.mode==='except'&&(!right))return false;
-        if(main.config.mode==='update'&&(!right))return false;
-        if(main.config.mode==='normal'&&(!right))return false;
+        if(main.config.mode==='except'&&(!opposite))return false;
+        if(main.config.mode==='update'&&(!opposite))return false;
+        if(main.config.mode==='normal'&&(!opposite))return false;
       }
-      if(target){
-        if(target.config.mode==='remove')return false;
-        if(target.config.mode==='normal'&&(!node.parent.visible))return false;
-      }
-
-      let pM=node.parent.data?.rules?.cur?.(this.mainSide);
-      if(pM&&(!main)&&pM.config.mode==='cover'&&target)return false;
-
-      /*if(left){
-        if(left.config.mode==='except'&&(!right))return false;
-        if(left.config.mode==='update'&&(!right))return false;
-        if(left.config.mode==='normal'&&(!right))return false;
-      }
-      if(right){
-        if(right.config.mode==='remove')return false;
-        if(right.config.mode==='normal'&&(!node.parent.visible))return false;
+      if(opposite){
+        if(opposite.config.mode==='remove')return false;
+        if(opposite.config.mode==='normal'&&(!node.parent.visible))return false;
       }
 
-      let pLeft=node.parent.data?.rules?.cur?.('left');
-      if(pLeft&&(!left)&&pLeft.config.mode==='cover'&&right)return false;*/
+      let pM=node.parent.data?.rules?.cur?.(this.main.side);
+      if(pM&&(!main)&&pM.config.mode==='cover'&&opposite)return false;
+
       return true;
     },
 
@@ -724,8 +627,8 @@ export default {
             if(s.mode!==s.comparedMode&&s.mode!=='normal'&&s.comparedMode!=='normal'&&this.view.controlPanel.linearGradient){
               //let grd=ctx.createLinearGradient(30,0,128,0);
               let grd=ctx.createLinearGradient(s.points[0].x+radius,s.points[0].y+radius,s.points[2].x-radius,s.points[2].y-radius);
-              grd.addColorStop(0,this.view.styles[s.mode].list[0]);
-              grd.addColorStop(1,this.view.styles[s.comparedMode].list[0]);
+              grd.addColorStop(0,this.view.styles[s.comparedMode].list[0]);
+              grd.addColorStop(1,this.view.styles[s.mode].list[0]);
               ctx.fillStyle=grd;
             }
           }
@@ -762,12 +665,12 @@ export default {
       let structs2 = [];
       let firstBuilder=drawConf.structBuilder();
       let reverseBuilder=drawConf.reversedBuilder();
-      for(let entry of Object.entries(drawConf.baseMap)){                             //, 构建base（base-compared差集）+base关联compared（base和compared并集）的绘画结构
+      for(let entry of drawConf.baseMap.entries()){                             //, 构建base（base-compared差集）+base关联compared（base和compared并集）的绘画结构
         structs1.push(...firstBuilder.get(entry[1]));
       }
       structs1.push(...firstBuilder.get());
 
-      for (let entry of Object.entries(drawConf.comparedMap)) {                  //, 构建compared（compared-base差集）关联的绘画结构
+      for (let entry of drawConf.comparedMap.entries()) {                  //, 构建compared（compared-base差集）关联的绘画结构
         if (firstBuilder.sets.has(entry[0])) continue;
         structs2.push(...reverseBuilder.get(entry[1]));
       }
@@ -781,15 +684,33 @@ export default {
       let start=Math.floor(div.scrollTop/this.view.treeItemHeight)-1;               //,可视起始项坐标
       start=start<0?0:start;
       //let origin=start*this.view.treeItemHeight-div.scrollTop;                                //,绘图起始点作为绘图坐标原点y （滚动节点一半情况）
+
+      let nodes=$(div).find(".diff-node:visible")
+              .toArray()
+              .splice(start,this.view.viewPortNodes);
+      let map = new Map();                                                                          //, object reduce后顺序不保持，因此换为map
+      nodes.map((n,idx)=>{
+        map.set(parseInt(n.dataset.nodeId),{e: n,
+          //y: origin + this.view.treeItemHeight * idx,
+          offset:n.parentElement.offsetTop,
+          y: n.parentElement.offsetTop-div.scrollTop,                                     //,起始y
+          id: parseInt(n.dataset.nodeId),
+          node:treeRef.getNode(n.dataset.nodeId),
+          level:parseInt(n.dataset.nodeLevel),
+          idx
+        });
+      });
+      return map;
+      /*
       return $(div)
           .find(".diff-node:visible")
           .toArray()
           .splice(start,this.view.viewPortNodes)
-          /*.map(x=>{
+          /!*.map(x=>{
             x.title=`pOffsetTop:${x.parentElement.offsetTop},offsetTop:${x.offsetTop}`
             x.parentElement.style.border='1px solid gray'
             return x;
-          })*/
+          })*!/
           .reduce((o,n,idx)=>({
             ...o,
             [n.dataset.nodeId]:{e: n,
@@ -802,6 +723,7 @@ export default {
               idx
             },
           }),{});
+        */
     },
   }
 
@@ -831,12 +753,21 @@ class DrawConf{
     return this;
   }
 
+  r2l(){
+    this.type=true;                                                                                              //, 右边先绘制
+    return this;
+  }
+  l2r(){                                                                                                               //, 左边先绘制
+    this.type=false;
+    return this;
+  }
+
   structBuilder() {
-    return new StructBuilder(this.comparedMap, this.comparedMappingId, this.baseKey, this.baseMappingKey,this.canvasWidth, this.listItemHeight, false,this.convergence);
+    return new StructBuilder(this.comparedMap, this.comparedMappingId, this.baseKey, this.baseMappingKey,this.canvasWidth, this.listItemHeight, this.type,this.convergence);
   }
 
   reversedBuilder(){
-    return new StructBuilder(this.baseMap, this.sourceMappingId, this.comparedKey, this.comparedMappingKey,this.canvasWidth, this.listItemHeight, true,this.convergence);
+    return new StructBuilder(this.baseMap, this.sourceMappingId, this.comparedKey, this.comparedMappingKey,this.canvasWidth, this.listItemHeight, !this.type,this.convergence);
   }
 }
 
@@ -1043,13 +974,13 @@ class StructBuilder {
   //' 获取compared节点及父节点  【RuleItem】
   getCompares(ruleItem){
     let comparedNode=ruleItem.nodes[this.mappingId];                                     //, 【Node】
-    let compared=comparedNode?this.comparedMap[comparedNode.id]:null;
+    let compared=comparedNode?this.comparedMap.get(comparedNode.id):null;
     let pCompared=null;
     if(comparedNode){
       let c=comparedNode;
       while(c.parent){
-        if(this.comparedMap[c.parent.id]){
-          pCompared=this.comparedMap[c.parent.id];
+        if(this.comparedMap.get(c.parent.id)){
+          pCompared=this.comparedMap.get(c.parent.id);
           break;
         }
         c=c.parent;
