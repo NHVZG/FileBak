@@ -5,7 +5,7 @@
       <el-col :span="1"><el-button @click="stoke">stoke</el-button></el-col>
     </el-row>-->
 
-  <!--  <el-switch active-text="合并后" inactive-text="全部节点"  v-model="view.controlPanel.midFilterMode" @change="onMidFilterChange"></el-switch>&nbsp;-->
+    <el-switch active-text="合并后" inactive-text="全部节点"  v-model="view.controlPanel.midFilterMode" @change="onMidFilterChange"></el-switch>&nbsp;
   <el-switch active-text="收敛" inactive-text="发散"  v-model="view.controlPanel.convergence" @change="onMidBoxScroll"></el-switch>&nbsp;
   <el-switch active-text="渐变" inactive-text="单色"  v-model="view.controlPanel.linearGradient" @change="onMidBoxScroll"></el-switch>&nbsp;
   <el-switch active-text="同步" inactive-text="独立"  v-model="view.controlPanel.scrollSync" @change="onMidBoxScroll"></el-switch>
@@ -130,6 +130,9 @@ export default {
                mappingToChild:true,shieldParent:true,zip:true},*/
             //{base:'base/H',relative:'/.*',type:'regex',mode:'increment',through:true},
             {base: 'base/cover', mode: 'cover'},
+            {base: 'base/cover/#cover@3', mode: 'increment'},
+            {base: 'base/cover/#cover@3/#cover@11', mode: 'cover'},
+            {base: 'base/cover/#cover@3/#cover@11/7#cover@11', mode: 'increment'},
             {base: 'base/update', mode: 'update'},
             {base: 'base/incrementUpdate', mode: 'incrementUpdate'},
             {base: 'base/increment', mode: 'increment'},
@@ -435,11 +438,17 @@ export default {
       let oxx={};                                                                                                   //, 中右列表公有节点集合
       let midMap=Object.values(mid).reduce((o,x)=>({...o,[x.node.data.path]:x}),{});
       for(let n of Object.entries(left)){
-        let m=midMap[n[1].node.data.path];
-        if(m)xxo[n[1].node.data.path]={left:n[1],mid:m};
+        /*let m=midMap[n[1].node.data.path];
+        if(m)xxo[n[1].node.data.path]={left:n[1],mid:m};*/
+        let mappings=n[1].node.data.rules.get().filter(x=>x.config.mode==='mapping'||x.config.mode==='normal');
+        mappings.map(x=>{
+          if(!x.nodes.target)return;
+          let m=midMap[x.nodes.target.path];
+          if(m)xxo[x.nodes.target.path]={left:n[1],mid:m};
+        });
       }
       for(let n of Object.entries(right)){
-        let l=xxo[n[1].node.data.path];
+        /*let l=xxo[n[1].node.data.path];
         if(l){
           l.right=n[1];
           xxx[n[1].node.data.path]=l;
@@ -447,7 +456,20 @@ export default {
         }else{
           let m=midMap[n[1].node.data.path];
           if(m)oxx[n[1].node.data.path]={right:n[1],mid:m};
-        }
+        }*/
+        let mappings=n[1].node.data.rules.get().filter(x=>x.config.mode==='mapping'||x.config.mode==='normal');
+        mappings.map(x=>{
+          if(!x.nodes.target)return;
+          let l=xxo[x.nodes.target.path];
+          if(l){
+            l.right=n[1];
+            xxx[x.nodes.target.path]=l;
+            oxx[x.nodes.target.path]=l;
+          }else{
+            let m=midMap[x.nodes.target.path];
+            if(m)oxx[x.nodes.target.path]={right:n[1],mid:m};
+          }
+        });
       }
 
       let map;

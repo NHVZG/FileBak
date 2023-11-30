@@ -3,6 +3,8 @@ import {dir} from "@/backend/v4/core/module/files/files";
 import {api, listen, request} from "@/backend/v4/decorator/api";
 import {SERVICE, clientCenter, EVENT} from "@/backend/v4/core/service/webrtcContainor";
 import {RtcHandler} from "@/backend/v4/decorator/rtc-handler";
+import {app} from "electron";
+import {listFileTransport} from "@/backend/v4/core/service/fileSync";
 
 //% 注解编译过程自上而下，controller接收消息，api注册前端事件，必须先@controller,再@api，保证注册@listen的方法包括了@channel的方法，fire才能生效
 @controller(SERVICE.CLIENT_RTC_CHANNEL)
@@ -35,6 +37,20 @@ class FileController{
     onFileStructReply({struct,requestId},client){
         return {struct,requestId};
     }
+
+    //.初始化
+    @request("syncFileList")
+    async syncFileList(name,{configs,requestId}){
+        let list=await listFileTransport(configs);
+        clientCenter.get(name).sendChannel({list,requestId,type:'sync-file-list'})
+    }
+
+    @channel("sync-file-list")
+    @channelReply()
+    async syncFileListReceive({list,requestId},client){
+        console.log(list);
+    }
+
 
 }
 

@@ -1,5 +1,6 @@
 <template>
   <div>
+    <el-button @click="test">test</el-button>
     <el-card>
       <el-row :gutter="4">
         <el-col :span="6" style="min-width: 60px;max-width: 60px">服务端</el-col>
@@ -202,6 +203,11 @@
               <el-button type="primary" @click="browserLeftTree">浏览</el-button>
             </el-col>
           </el-row>
+          <el-row>
+            <el-col>
+              <el-button @click="test">初始化</el-button>
+            </el-col>
+          </el-row>
         </el-card>
       </el-col>
       <el-col :span="12">
@@ -292,8 +298,14 @@ export default {
             {base: 'D:/Test/base/b', relative: 'a.bmp', target: 'D:/Test/compared/x.txt', mode: 'mapping',pruning:true},
             //{base: 'D:/Test/compared/d.txt', relative: '', mode: 'incrementUpdate',dispatch:Rule.DISPATCH_TARGET},
             {base: 'D:/Test/base/a/a.txt', relative: '', mode: 'increment'},
+
+            {base: 'D:/Test/base/a.zip/a',  mode: 'mapping', target:'D:/Test/compared/x.zip',through:true,zip:true,pruning: true},
+            {base: 'D:/Test/base/a.zip/a', relative: '', mode: 'mapping', target:'D:/Test/compared/azip',through:true},
+            {base: 'D:/Test/compared/azip', relative: '', mode: 'incrementUpdate', through:true,dispatch:Rule.DISPATCH_TARGET},
+
             {base: 'D:/Test/base/c.txt', relative: '', mode: 'update'},
             {base: 'D:/Test/base/b/bb', relative: '', mode: 'cover'},
+            {base: 'D:/Test/base/b/bb/b.bmp', target: 'D:/Test/compared/b/bb/x.bmp', mode: 'mapping'},
             {base: 'D:/Test/base/c', relative: '',target: 'D:/Test/compared/从', mode: 'mapping',pruning:true},
             {base: 'D:/Test/compared/从', relative: '', mode: 'increment',dispatch:Rule.DISPATCH_TARGET},
             //{base: 'D:/Test/base', relative: 'b.txt', target: 'D:/Test/compared/d.txt', mode: 'mapping'},
@@ -348,10 +360,11 @@ export default {
   },
   methods:{
     async test(){
-      window.files.onFileStructReply('client1',(struct)=>{
+      /*window.files.onFileStructReply('client1',(struct)=>{
         console.log(struct);
       });
-      await window.files.remoteDir(this.client1.name,{base:'D:/'});
+      await window.files.remoteDir(this.client1.name,{base:'D:/'});*/
+      window.files.syncFileList(this.localClient.name,{configs:this.clone(this.rules.upload),requestId:uuidv4()});
     },
     isMsg(content){
       return content.data.type==='ws-msg'||content.data.type==='ws-msg-transfer'

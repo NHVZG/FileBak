@@ -239,7 +239,7 @@ class WebRTCClient{
     @log('channel Error')
     onChannelError(){}
 
-    @log('channel Message: ${event.data}')
+    //@log('channel Message: ${event.data}')
     onChannelMessage(event){}
 
 

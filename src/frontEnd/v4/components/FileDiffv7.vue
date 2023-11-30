@@ -77,7 +77,7 @@ export default {
           right:null,
           mid:null,
         },
-        scrollDelay:14,
+        scrollDelay:30,
         boxHeight: 600,
         treeItemHeight:26,
         controlPanel:{
@@ -284,7 +284,7 @@ export default {
       let pb={children:[root],rules:new RuleBundle()};
       let pns=[{root:side.forest,node:side.forest}]; //, forest 是pn中的一支
 
-      trees(pb,pns,side.forest,baseNodeParent,side.generateRules(),this.key);
+      await trees(pb,pns,side.forest,baseNodeParent,side.generateRules(),this.key);
       let {match,nearest}=this.findNode(baseNodeParent,basePath);
       side.tree=match.children;
       if(main){
@@ -308,7 +308,7 @@ export default {
       pnNode.rules.append(parentNode.rules,this.key,false);
       parentNodeCopy.rules.append(parentNode.rules,this.key,false);
       //let pns=[{root:absolutRoot,node:pnNode}];
-      trees(pb,parentNode.pns,side.forest,parentNodeCopy,side.generateRules(),this.key);
+      await trees(pb,parentNode.pns,side.forest,parentNodeCopy,side.generateRules(),this.key);
       this.initMidTree();
       resolve(parentNodeCopy.children);
       await this.$nextTick(()=>{});
@@ -485,18 +485,22 @@ export default {
       let xxo={};                                                                                                   //, 左中列表公有节点集合
       let oxx={};                                                                                                   //, 中右列表公有节点集合
       //let midMap=mid.entries().reduce((o,x)=>({...o,[x.node.data.path]:x}),{});
-      let midMap={}
-      for(let entry of mid.entries()){
-        let x=entry[1];
-        midMap[x.node.data.path]=x;
+      let midMap={};
+      for(let n of mid.entries(mid)){
+        midMap[n[1].node.data.path]=n[1];
       }
-
       for(let n of left.entries()){
-        let m=midMap[n[1].node.data.path];
-        if(m)xxo[n[1].node.data.path]={left:n[1],mid:m};
+        /*let m=midMap[n[1].node.data.path];
+        if(m)xxo[n[1].node.data.path]={left:n[1],mid:m};*/
+        let mappings=n[1].node.data.rules.get().filter(x=>x.config.mode==='mapping'||x.config.mode==='normal');
+        mappings.map(x=>{
+          if(!x.nodes.target)return;
+          let m=midMap[x.nodes.target.path];
+          if(m)xxo[x.nodes.target.path]={left:n[1],mid:m};
+        });
       }
       for(let n of right.entries()){
-        let l=xxo[n[1].node.data.path];
+        /*let l=xxo[n[1].node.data.path];
         if(l){
           l.right=n[1];
           xxx[n[1].node.data.path]=l;
@@ -504,7 +508,20 @@ export default {
         }else{
           let m=midMap[n[1].node.data.path];
           if(m)oxx[n[1].node.data.path]={right:n[1],mid:m};
-        }
+        }*/
+        let mappings=n[1].node.data.rules.get().filter(x=>x.config.mode==='mapping'||x.config.mode==='normal');
+        mappings.map(x=>{
+          if(!x.nodes.target)return;
+          let l=xxo[x.nodes.target.path];
+          if(l){
+            l.right=n[1];
+            xxx[x.nodes.target.path]=l;
+            oxx[x.nodes.target.path]=l;
+          }else{
+            let m=midMap[x.nodes.target.path];
+            if(m)oxx[x.nodes.target.path]={right:n[1],mid:m};
+          }
+        });
       }
 
       let map;
@@ -602,7 +619,7 @@ export default {
     drawCanvas(canvas,structs){
       let ctx=canvas.getContext('2d');
 
-      ctx.lineWidth = 0.8;
+      ctx.lineWidth = 0.5;
       let offset=0;
       let radius=canvas.width/2;//50;
       //let borderBottomStyle='3px solid ';

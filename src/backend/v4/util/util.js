@@ -21,6 +21,13 @@ function time(){
 
 //. promise化命令执行
 function execAsync(command) {
+    /*child_process.exec('wmic logicaldisk get caption', function(err, stdout, stderr) {
+       if(err || stderr) {
+           console.log("root path open failed" + err + stderr);
+           return;
+       }
+       callback(stdout.replace('Caption','').replace(/\s+/gm,'').split(':').filter(d=>d));
+   });*/
     return new Promise(function(resolve, reject) {
         child_process.exec(command, (error, stdout, stderr) => {
             if (error) {

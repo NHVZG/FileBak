@@ -295,7 +295,19 @@ let rightTrees={
         ...buildTestStruct('increment',{leafStart:1,groupCount:1}),
         ...buildTestStruct('update',{leafStart:1,groupCount:1}),
         ...buildTestStruct('incrementUpdate',{leafStart:1,groupCount:1}),
-        ...buildTestStruct('cover',{leafStart:1,groupCount:1}),
+
+        //...buildTestStruct('cover',{leafStart:3,groupCount:1,groupStart:3}),
+        cover:{
+            '#cover@3':{
+                '#cover@112':'#cover@112',
+                '#cover@111':'#cover@111',
+                '#cover@11':[{
+                    asd:['123','456']
+                }]
+            },
+            '#cover@2':['#cover@222','#cover@211'],
+        },
+
         ...buildTestStruct('except',{groupCount:1}),
         ...buildTestStruct('remove'),
         ...buildTestStruct('mapping',{groupCount:1}),

@@ -321,6 +321,18 @@ class Rule{
 }
 
 
+class Handler{
+    constructor(children,after) {
+        if(children)this.children=children;
+        if(after)this.after=after;
+    }
+
+
+    children=(pb)=>pb.children;
+    after=(base,leaf,forest,source, {maps, checks},key)=>true;
+
+}
+
 //. 合并森林
 function mergeTree(baseTreeNode,                                                                            //, baseTreeNode：基础树
     comparedTree,                                                                                   //, comparedTree：待合并树
@@ -345,14 +357,16 @@ function mergeTree(baseTreeNode,                                                
 }
 
 //. 初始化树结构+规则
-function trees(pb,                                                                                                       //, 父基础节点{}
+async function trees(pb,                                                                                                       //, 父基础节点{}
     pns=[],                                                                                                     //, 父节点映射的集合 【Node】
     forest=new Node(),                                                                                  //, 映射的所有树
     parent = new Node(),                                                                               //, 父节点【Node】
     {maps=new RuleBundle(),checks=new RuleBundle()},                                //, maps：映射规则，checks：普通规则
-    key                                                                                                           //, 分组名
+    key,                                                                                                           //, 分组名
+   handler=new Handler()                                                                      //,解析器
 ){
-    for(let base of pb.children){
+    let children=await handler.children(pb);
+    for(let base of children){
         let source=parent.addNode(new Node().from(base));
         let sourceRules=checks.check(source,source,key,Rule.DISPATCH_BASE);      //,普通规则（base）
         let mappingRules=maps.check(source,null,key,Rule.DISPATCH_BASE);         //,映射规则（base）【临时】
@@ -414,8 +428,10 @@ function trees(pb,                                                              
             leaf=curNodes.concat(extendCurNodes);
         }
         source.pns=leaf;                                                                                       //, 保存过程映射树节点
-        if(!base.children)continue;
-        trees(base, leaf, forest, source, {maps, checks},key);
+        //if(!base.children)continue;
+        if(!handler.after(base,leaf,forest,source, {maps, checks},key))continue;
+        if(!handler.children(base))continue;
+        await trees(base, leaf, forest, source, {maps, checks},key,handler);
     }
 }
 
@@ -466,10 +482,12 @@ export {
     RuleBundle,
     RuleItem,
     Rule,
+    Handler,
 
     trees,
     treeByPath,
     mergeTree,
     initBaseRule,
     initComparedRule,
+    RULE_CONFIGS
 }
