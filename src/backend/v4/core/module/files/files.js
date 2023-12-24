@@ -6,6 +6,7 @@ import crypto from "crypto";
 import path from "path";
 import {FILE_TYPE} from "@/backend/v4/core/constant/constant";
 import JSZip from "jszip";
+import * as  fse from 'fs-extra'
 
 function formatPath(...path){
     return path.join('/').replaceAll(/\/+/gm, '/').replaceAll(/\/$/gm,'').replace(/^\//,'');
@@ -24,6 +25,69 @@ async function listDriver(){
 }
 
 
+//. 读取zip(支持嵌套zip）
+async function zips(relative,absolut,data){
+    //relative=formatPath(relative);
+    return new Promise( (resolve,reject)=>{
+        if(!data){
+            let rootZipPath=relative;
+            while(!fs.existsSync(rootZipPath)){
+                if(!rootZipPath||rootZipPath==='.')return reject();
+                rootZipPath=path.dirname(rootZipPath);          //,循环取父目录 直到取到最外层zip
+            }
+            if(!rootZipPath.endsWith('.zip'))return reject();  //,非zip文件
+            fs.readFile(rootZipPath,async (err,data)=>{
+                if(err){
+                    console.dir(err);
+                    return reject(err);
+                }
+                let relativePath=formatPath(relative.replace(rootZipPath,''));
+                let absolutePath=rootZipPath===''||rootZipPath==='.'?(absolut||relative):rootZipPath;
+                /*if(!relativePath) {       //,根zip即目的
+                    return resolve(()=>data, absolutePath, relativePath);
+                }*/
+                return resolve(await zips(relativePath,absolutePath,data));
+            });
+            return;
+        }
+        new JSZip().loadAsync(data).then(async zip=>{
+            if(!relative||relative==='.'){          //, 根目录
+                return resolve({data:()=>data, absolut, zip,entry:zip,relative});
+            }
+            let fileEntry;      //,JSZipObject
+            let filePath=relative;
+            //let isNestedZip=relativePath.includes(".zip");
+            while (!(fileEntry=zip.file(filePath))&&(filePath!=='.')){
+                filePath=path.dirname(filePath);                                //,循环取父目录 直到取到最外层zip
+            }
+            if(!fileEntry){                                                                                             //, 目录
+                zip.folder(relative);
+                let empty=zip.file(new RegExp(`^${relative}/`)).length===0;
+                if(empty){
+                    return resolve({data:()=>null,absolut,entry:null,zip,relative});
+                }
+                resolve({
+                    data:async ()=>await new Promise((re,rj)=>{
+                        zip.folder(relative).generateAsync({type:"nodebuffer"}).then(content=>re(content));
+                    }),
+                    absolut:`${absolut}/${relative}`,entry:zip.folder(relative),zip,relative
+                });
+            }else if(fileEntry&&fileEntry.name.endsWith('.zip')&&fileEntry._data.compressedContent){//,嵌套zip
+                let relativePath=formatPath(relative.replace(filePath,''));
+                let absolutPath=!filePath||filePath==='.'?(absolut||relative):formatPath(`${absolut}/${filePath}`);
+                return resolve(await zips(relativePath,absolutPath,await fileEntry.async("nodebuffer")));
+            }else if(fileEntry){    //,文件
+                resolve({
+                    data:async ()=>await new Promise((re,rj)=>{
+                        fileEntry.async("nodebuffer").then(content=>re(content));
+                    }),
+                    absolut:`${absolut}/${relative}`,entry:fileEntry,zip,relative
+                });
+            }
+        },err=>reject(err));
+    });
+}
+
 async function dir(base) {
     if(!base){
         let drivers=await listDriver();
@@ -35,7 +99,7 @@ async function dir(base) {
     }
     let list=[];
     if((!fs.existsSync(base)&&base.includes(".zip"))||base.endsWith('.zip')){
-        list= await zipList(base);
+        list= await zipDir(base);
     }else{
         let typeMap={};
         list=fs.readdirSync(base).map(f=>{
@@ -76,78 +140,45 @@ async function dir(base) {
         });
 }
 
-//. 读取zip(支持嵌套zip）
-async function zipList(relativePath,absolutePath,data){
-    return new Promise( (resolve,reject)=>{
-        if(!data){                                                                                                  //,初始化zip文件数据
-            let zipPath=relativePath;
-            while (!fs.existsSync(zipPath)){
-                if(zipPath==='.')return resolve([]);
-                zipPath=path.dirname(zipPath);
+
+
+
+//. 读取zip目录
+function zipDir(base) {
+        return zips(base).then(({data, absolut, zip, entry, relative}) => {
+        let set = new Set();
+        let fileList = [];
+        let typeMap = {};
+        //let folderPath = relative === '.' || relative === '' ? '' : relative;
+        if(!entry||(!entry.forEach))return fileList;
+        entry.forEach((filePath, file) => {
+            let directory = filePath.substring(0, filePath.indexOf('/'));
+            let fileName = directory ? directory : filePath;
+            if (set.has(fileName)) return;
+            set.add(fileName);
+            let type;
+            if (directory) {
+                type = FILE_TYPE.DIRECTORY;
+            } else if (fileName.endsWith('.zip') && file._data.compressedContent) {
+                type = FILE_TYPE.ZIP;
+            } else {
+                type = FILE_TYPE.FILE;
             }
-            let subRelativePath=formatPath(relativePath.replace(zipPath,''));
-            fs.readFile(zipPath,async (err, data)=>{
-                let subAbsolutePath=zipPath===''||zipPath==='.'?(absolutePath||relativePath):zipPath;
-                resolve(await zipList(subRelativePath, subAbsolutePath,data));
+            let index = typeMap[type] || 1;
+            let idx = type + '-' + index;
+            typeMap[type] = ++index;
+            fileList.push({
+                path: formatPath(`${absolut}/${fileName}`),
+                name: fileName,
+                type,
+                idx,
+                inZip: true
             });
-            return;
-        }
-
-        new JSZip().loadAsync(data).then(async zip=>{
-            let fileEntry;
-            let zipPath=relativePath;
-            if(relativePath==='.'||relativePath===''){      //, 根目录
-
-            }else{
-                //let isNestedZip=relativePath.includes(".zip");
-                while (!(fileEntry=zip.file(zipPath))&&(zipPath!=='.')){
-                    zipPath=path.dirname(zipPath);
-                }
-            }
-
-            if(!fileEntry){//, 根目录或者尝试用folder
-                let set=new Set();
-                let fileList=[];
-                let typeMap={};
-                fileEntry=relativePath==='.'||relativePath===''?zip:zip.folder(relativePath);
-                let folderPath=relativePath==='.'||relativePath===''?'':relativePath;
-                fileEntry.forEach((filePath,file)=>{
-                    let directory=filePath.substring(0,filePath.indexOf('/'));
-                    let fileName=directory?directory:filePath;
-                    if(set.has(fileName))return;
-                    set.add(fileName);
-                    let type;
-                    if(directory){
-                        type=FILE_TYPE.DIRECTORY;
-                    }else if(fileName.endsWith('.zip')&&file._data.compressedContent){
-                        type=FILE_TYPE.ZIP;
-                    }else{
-                        type=FILE_TYPE.FILE;
-                    }
-                    let index=typeMap[type]||1;
-                    let idx=type+'-'+index;
-                    typeMap[type]=++index;
-                    fileList.push({
-                        path:formatPath(`${absolutePath}/${folderPath}/${fileName}`),
-                        name:fileName,
-                        type,
-                        idx,
-                        inZip:true
-                    });
-                });
-                resolve(fileList);
-            }else if(fileEntry&&fileEntry.name.endsWith('.zip')&&fileEntry._data.compressedContent){ //, 嵌套zip
-                let subRelativePath=formatPath(relativePath.replace(zipPath,''));
-                let subAbsolutePath=zipPath===''||zipPath==='.'?(absolutePath||relativePath):formatPath(`${absolutePath}/${zipPath}`);
-                resolve(await zipList(subRelativePath,subAbsolutePath,fileEntry._data.compressedContent));
-            }else{
-                resolve([]);
-            }
-
         });
-
+        return fileList;
     });
 }
+
 
 function fileInfo(filePath){
     let info;
@@ -180,26 +211,36 @@ function hashFile(filePath,callback){
     });
     fd.pipe(hash);
 }
+function hashBuffer(buffer,callback){
+    callback(crypto
+        .createHash("sha256")
+        .update(new Uint8Array(buffer))
+        // .update(Buffer.from(fileBuffer))
+        .digest("hex"));
+}
 
 
+const chunkSize=1024*1024*100;      //100m
 //. 文件
 function chunkFile(sourcePath,targetPath,resolve){
     //let cacheDir=app.getAppPath();                 //, 应用目录
-    let TempDir=app.getPath('temp');   //, 系统缓存目录
+    /*let TempDir=app.getPath('temp');   //, 系统缓存目录
     let cacheDir=`${TempDir}/fileBak`;
     if (!fs.existsSync(cacheDir)){
         fs.mkdirSync(cacheDir);
-    }
-    const readStream = fs.createReadStream(sourcePath,{highWaterMark:1024*1024*100});   //100m
+    }*/
+    const readStream = fs.createReadStream(sourcePath,{highWaterMark:chunkSize});
     let idx=1;
     let length=0;
     let id=crypto.randomUUID();
+    let oneChunk=false;
     readStream.on('data', chunk => {        //, 默认64k大小文件分片
         let buffer=Buffer.from(chunk);
         length=length+chunk.length;
+        oneChunk=idx===0&&chunk.length>chunkSize;    //, 是否单个数据块（单个不需等合并直接写入目的文件）
         resolve({
             id,
-            end:false,
+            end:oneChunk,
             idx:idx++,
             path:targetPath,
             name:path.basename(targetPath),
@@ -211,17 +252,59 @@ function chunkFile(sourcePath,targetPath,resolve){
     });
     readStream.on('end', () => {
         hashFile(sourcePath,(hash)=>{
-            resolve({
-                id,
-                end:true,
-                idx:idx++,
-                path:targetPath,
-                name:path.basename(targetPath),
-                length,
-                hash});
+            if(!oneChunk) {
+                resolve({
+                    id,
+                    end: true,
+                    idx: idx++,
+                    path: targetPath,
+                    name: path.basename(targetPath),
+                    length,
+                    hash
+                });
+            }
+
         });
     });
 }
+
+function chunkBuffer(buffer,targetPath,resolve){
+    let buf;
+    let offset=0;
+    let length=0;
+    let oneChunk=false;
+    let id=crypto.randomUUID();
+    let idx=1;
+    while((buf=buffer.slice(offset,chunkSize)).length>0){
+        length=length+buf.length;
+        oneChunk=idx===0&&buf.length>chunkSize;    //, 是否单个数据块（单个不需等合并直接写入目的文件）
+        resolve({
+            id,
+            end:oneChunk,
+            idx:idx++,
+            path:targetPath,
+            name:path.basename(targetPath),
+            chunkStr:buffer.toString('binary'),                //,binary=latin1=ISO-8859-1
+            hash:crypto.createHash("sha256")
+                .update(buffer)
+                .digest("hex")
+        });
+    }
+    if(!oneChunk){
+        hashBuffer(buffer,(hash)=>{
+                resolve({
+                    id,
+                    end: true,
+                    idx: idx++,
+                    path: targetPath,
+                    name: path.basename(targetPath),
+                    length,
+                    hash
+                });
+        });
+    }
+}
+
 
 //. 校验hash
 function checkHash(chunkStr,hash){
@@ -274,6 +357,22 @@ function mergeFile(targetFilePath,files){
     });
 }
 
+function bufferPath(id){
+    let TempDir=app.getPath('temp');   //, 系统缓存目录
+    let bufferPath=`${TempDir}/fileBak/${id}`;
+    fse.ensureDirSync(bufferPath);
+    return bufferPath;
+}
+
+function clearBufferPath(){
+    let TempDir=app.getPath('temp');   //, 系统缓存目录
+    let cacheDir=`${TempDir}/fileBak/`;
+    fse.removeSync(cacheDir);
+}
 
 
-export {dir,listDriver,chunkFile,fileInfo,formatPath};
+//. dir -> zip/xxx/xxx
+//. zip/yyy -> zip/xxx/xxx
+//. zip/yyy  ->dir
+
+export {dir,listDriver,chunkFile,fileInfo,formatPath,writeBuffer,mergeFile,checkHash,bufferPath,clearBufferPath};

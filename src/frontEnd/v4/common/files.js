@@ -15,7 +15,17 @@ function buildFileNode(struct){
     );
 }
 
+function clone(obj){
+    return JSON.parse(JSON.stringify(obj));
+}
+
+function format(...path){
+    return path.join('/').replaceAll(/\/+/gm, '/').replaceAll(/\/$/gm,'').replace(/^\//,'');
+}
+
 
 export {
+    clone,
+    format,
     buildFileNode
 }

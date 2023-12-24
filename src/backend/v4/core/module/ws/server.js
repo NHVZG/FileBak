@@ -120,7 +120,7 @@ class WsServer{
     onWsMessage(ws,callback){}
 
     //. websocket ping事件
-    @log('${ws.clientID}: pong')
+    //@log('${ws.clientID}: pong')
     onWsPong(ws){}
 
     //. websocket 连接事件

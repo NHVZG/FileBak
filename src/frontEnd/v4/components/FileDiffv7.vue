@@ -62,6 +62,8 @@ export default {
     lazy: {type: Boolean,default: false},
     loadBaseChildren: {type: Function,default: () => {}},
     loadComparedChildren: {type: Function,default: () => {}},
+    loadLeftChildren: {type: Function,default: () => {}},
+    loadRightChildren: {type: Function,default: () => {}},
     conf:{type:Object,default:{}}
   },
   data() {
@@ -101,12 +103,14 @@ export default {
       key:undefined,    //, 源树默认规则（base，compared）
 
       left:{
+        parent:null,    //, 当前树父节点
         tree:[],            //, 渲染树
         side:'left',       //, 左边标识
         basePath:'',    //, 基础路径
         forest:[]         //, 所有森林
       },
       right:{
+        parent:null,
         tree:[],
         side:'right',
         basePath:'',
@@ -237,11 +241,13 @@ export default {
     },
     //. 加载左数子节点
     loadLeftSub(elNode,resolve){
-      this.loadBaseChildren(elNode,async (baseNodes)=>this.loadTree(elNode.data,baseNodes,resolve,this.left));
+      //this.loadBaseChildren(elNode,async (baseNodes)=>this.loadTree(elNode.data,baseNodes,resolve,this.left));
+      this.loadLeftChildren(elNode,async (baseNodes)=>this.loadTree(elNode.data,baseNodes,resolve,this.left));
     },
     //. 加载右数子节点
     loadRightSub(elNode,resolve){
-      this.loadComparedChildren(elNode,async (baseNodes)=>this.loadTree(elNode.data,baseNodes,resolve,this.right));
+      //this.loadComparedChildren(elNode,async (baseNodes)=>this.loadTree(elNode.data,baseNodes,resolve,this.right));
+      this.loadRightChildren(elNode,async (baseNodes)=>this.loadTree(elNode.data,baseNodes,resolve,this.right));
     },
     //. 左展开
     onLeftExpand(){
@@ -286,6 +292,7 @@ export default {
 
       await trees(pb,pns,side.forest,baseNodeParent,side.generateRules(),this.key);
       let {match,nearest}=this.findNode(baseNodeParent,basePath);
+      side.parent=match;
       side.tree=match.children;
       if(main){
         this.main=side;
@@ -355,7 +362,7 @@ export default {
         let normal = ruleList.find(x => x.config.mode === 'normal');
         if (normal && normal?.nodes?.target) {
           let targetCur = normal.nodes.target?.rules?.cur?.(this.main.side);
-          if (targetCur&&targetCur.config.mode&&targetCur.config.mode!=='mapping') return {relate:targetCur.config.mode,cur:cur||'normal'};
+          if (targetCur&&targetCur.config.mode&&targetCur.config.mode!=='mapping') return {relate:targetCur.config.mode==='increment'?'':targetCur.config.mode,cur:cur||'normal'};
         }
       }
       return {cur:cur||'normal'};
@@ -609,7 +616,20 @@ export default {
         if(opposite.config.mode==='normal'&&(!node.parent.visible))return false;
       }
 
-      let pM=node.parent.data?.rules?.cur?.(this.main.side);
+      //let pM=node.parent.data?.rules?.cur?.(this.main.side);
+      let pM;
+      let rules=
+          node.parent.level!==0?
+          node.parent.data?.rules?.get?.(this.main.side):
+          this.main.parent?.rules?.get?.();                         //, 根目录如果cover的情况
+      if(rules){
+        for(let rule of rules){
+          if(rule.config.mode!=='mapping'){     //, 取到第一个非mapping的规则
+            pM= rule;
+            break;
+          }
+        }
+      }
       if(pM&&(!main)&&pM.config.mode==='cover'&&opposite)return false;
 
       return true;

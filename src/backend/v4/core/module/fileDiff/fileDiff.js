@@ -365,7 +365,7 @@ async function trees(pb,                                                        
     key,                                                                                                           //, 分组名
    handler=new Handler()                                                                      //,解析器
 ){
-    let children=await handler.children(pb);
+    let children=await handler.children(pb,{maps,checks});
     for(let base of children){
         let source=parent.addNode(new Node().from(base));
         let sourceRules=checks.check(source,source,key,Rule.DISPATCH_BASE);      //,普通规则（base）
@@ -411,6 +411,7 @@ async function trees(pb,                                                        
             let extendCurNodes=[];
             for(let pn of pns){
                 let node=new Node().from(base);
+                node.inZip=pn.node.type===FILE_TYPE.ZIP||pn.node.inZip;
                 node.path=pn.node.path?`${pn.node.path}/${node.name}`:node.name;
                 let target=pn.node.addNode(node);
                 target.rules=checks
@@ -456,7 +457,10 @@ function treeByPath(path,leafType,zip=false){                                   
         parent.addNode(leaf);
     }
     leaf.type=leafType;
-    if(zip)parent.type=4;
+    if(zip){
+        parent.type=FILE_TYPE.ZIP;
+        leaf.inZip=true;
+    }
     return {root,leaf,parent};
 }
 

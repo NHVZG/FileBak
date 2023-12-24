@@ -248,7 +248,7 @@ class WebRTCClient{
     @log('ws open')
     onWsOpen(){}
 
-    @log('ws ping')
+    //@log('ws ping')
     onWsPing(){}
 
     onWsMsg(){}

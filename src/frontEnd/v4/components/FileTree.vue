@@ -21,7 +21,7 @@
                       <span style="white-space: pre-wrap;font-size:10px">
                         {{JSON.stringify(data,(k,v)=>{
                         switch(k){
-                          case 'children':return undefined;
+                          case 'children':return undefined;x
                           case 'parent':return undefined;
                           case 'pns':return undefined;
                           case 'path':return v;
