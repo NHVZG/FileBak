@@ -247,7 +247,7 @@ class RuleItem{
         this.config=new Rule(
             r.base,
             r.mode,
-            {relative:r.relative,type:r.type},
+            {relative:r.relative,type:r.type,testOnlyRelative:r.testOnlyRelative},
             {target:r.target,pruning:r.pruning,zip:r.zip,sub:r.sub,dispatch:r.dispatch},
             r.through
         );
@@ -274,13 +274,14 @@ class Rule{
     static DISPATCH_BASE=2;        //匹配来源：源节点匹配（对多个映射目标同时生效）
 
     constructor(base, mode,
-                {relative, type}={},
+                {relative, type,testOnlyRelative}={},
                 {target, pruning, zip, sub, dispatch}={},
                 through) {
         this.base=base;                                                                                             //, 基础路径
         this.mode=mode;                                                                                         //, 规则类型
         this.relative=relative;                                                                                     //, 相对路径
         this.type=type==='regex'?Rule.TYPE_REGEX:Rule.TYPE_MATCH;                   //, 相对路径匹配方式
+        this.testOnlyRelative=testOnlyRelative;                                                          //, regex匹配的true:相对路径 false:全路径
         this.target=target;                                                                                        //, 映射路径（mode=mapping生效）
         this.pruning=pruning||false;                                                                          //, 是否剪枝（仅映射mode=mapping有效），true则原树结构去除，false则复制出新的结构
         this.zip=zip||false;                                                                                         //, 是否映射为zip
@@ -294,10 +295,10 @@ class Rule{
         if(!node.path.startsWith(this.base)){
             return false;
         }
-        if(this.type===Rule.TYPE_REGEX&&(!new RegExp(this.relative).test(node.path))){
+        if(this.type===Rule.TYPE_REGEX&&(!new RegExp(this.relative).test((this.testOnlyRelative?node.path.replace(this.base,''):node.path)))){
             return false;
         }
-        if(this.type===Rule.TYPE_MATCH&&this.format(this.base,this.relative)!==node.path) {
+        if(this.type===Rule.TYPE_MATCH&&this.format(this.base,this.relative||'')!==node.path) {
             return false;
         }
         if(!this.through&&node.inZip) {

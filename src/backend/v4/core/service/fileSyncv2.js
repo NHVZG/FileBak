@@ -237,11 +237,6 @@ async function upload(fileItem,onChunk){
             }else{
                 zip.file(formatPath(source.target.replace(fileItem.target,'')),await fs.readFileSync(source.source));
             }
-            /*if(file.zipEntry){
-                zip.file(formatPath(source.target.replace(fileItem.target,'')),await file.zipData());
-            }else{
-                zip.file(formatPath(source.target.replace(fileItem.target,'')),await fs.readFileSync(source.source));
-            }*/
         }
         for(let e of Object.entries(zipEntries)){//, 没有子文件的zip写入
             zip.file(e[1].relative,e[1].data);
@@ -303,7 +298,7 @@ async function saveFile(chunk,fileItem,merge){
             sourceBuffers=fs.readFileSync(tempFile);
         }else{
             sourceBuffers=Buffer.from(chunk.chunkStr, 'binary');
-            let hash=await hashBuffer(sourceBuffers);
+            let hash=await hashBuffer(sourceBuffers)
             if(hash!==chunk.fileHash){
                 clearBufferPath(chunk.id);
                 reject('文件hash校验失败');
@@ -327,8 +322,13 @@ async function saveFile(chunk,fileItem,merge){
                         }
                     }
                 }else{
-                    targetFile.zipEntry.file(fileItem.target.replace(targetFile.zipEntry.zipPath,''),sourceBuffers);
-                    targetFile.zipEntry.save(targetFile.rootZipEntry.zipPath);
+                    if(fileItem.target===targetFile.zipEntry.zipPath){
+                        targetFile.pZipEntry.file(formatPath(targetFile.zipEntry.zipPath.replace(targetFile.pZipEntry.zipPath,'')),sourceBuffers);
+                        targetFile.pZipEntry.save(targetFile.rootZipEntry.zipPath);
+                    }else{
+                        targetFile.zipEntry.file(fileItem.target.replace(targetFile.zipEntry.zipPath,''),sourceBuffers);
+                        targetFile.zipEntry.save(targetFile.rootZipEntry.zipPath);
+                    }
                 }
             } catch (err) {
                 deleteFile(targetFile.rootZipEntry.zipPath);

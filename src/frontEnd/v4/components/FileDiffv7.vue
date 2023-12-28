@@ -64,7 +64,8 @@ export default {
     loadComparedChildren: {type: Function,default: () => {}},
     loadLeftChildren: {type: Function,default: () => {}},
     loadRightChildren: {type: Function,default: () => {}},
-    conf:{type:Object,default:{}}
+    conf:{type:Object,default:{}},
+    drawBaseMapping:{type:Boolean,default:true}     //预览树结构时 是否绘制跟节点映射规则
   },
   data() {
     return {
@@ -339,13 +340,13 @@ export default {
 
 
     leftTreeItemClass(data,node) {
-      let styles=this.getBaseClass(data,node)||'normal';
+      let styles=this.getBaseClass(data,node,this.left)||'normal';
       data.style=styles.cur;
       return styles.relate||data.style;
     },
 
     rightTreeItemClass(data,node) {
-      let styles=this.getBaseClass(data,node)||'normal'
+      let styles=this.getBaseClass(data,node,this.right)||'normal'
       data.style=styles.cur;
       return styles.relate||data.style;
     },
@@ -355,8 +356,9 @@ export default {
       return data.style;
     },
 
-    getBaseClass(data,node){
+    getBaseClass(data,node,side){
       let cur=data?.rules?.cur?.()?.config?.mode;                                                   //, 如果源节点（左树，右树）无着色规则，中树存在着色规则则取中树
+      let curConf=data?.rules?.cur?.()?.config;
       if(!cur||cur==='normal') {
         let ruleList = data?.rules?.get?.() || [];
         let normal = ruleList.find(x => x.config.mode === 'normal');
@@ -364,6 +366,9 @@ export default {
           let targetCur = normal.nodes.target?.rules?.cur?.(this.main.side);
           if (targetCur&&targetCur.config.mode&&targetCur.config.mode!=='mapping') return {relate:targetCur.config.mode==='increment'?'':targetCur.config.mode,cur:cur||'normal'};
         }
+      }
+      if(cur==='mapping'&&(!this.drawBaseMapping)&&(side===this.main?(curConf?.base===side.basePath&&(!curConf.relative)):(curConf?.target===side.basePath))){
+        return {cur:'normal'};
       }
       return {cur:cur||'normal'};
       //return data?.rules?.cur?.()?.config?.mode||'normal';
@@ -375,6 +380,9 @@ export default {
       if(main){
         if(main.config.mode==='except'||main.config.mode==='increment'){
           if(!target)return main.config.mode;
+        }
+        if(main.config.mode==='mapping'&&(!this.drawBaseMapping)&&(main.config.base===this.main.basePath&&(!main.config.relative))){
+          return 'normal';
         }
         else if(main.config.mode!=='normal'){
           return main.config.mode;
@@ -915,7 +923,7 @@ class Struct{
   rectangle(ci){
     this.type=Struct.DRAW_RECTANGLE;
     this.cp=1;
-    this.ci=ci||1;
+    this.ci=(ci===undefined||ci==null)?1:ci;
   }
   //` 集合添加
   pair(source,target){

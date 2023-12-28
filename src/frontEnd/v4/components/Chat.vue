@@ -230,7 +230,7 @@
 
     <el-row>
       <el-col :span="24">
-    <FileDiffv7 :lazy="true" :load-left-children="load('left')" :load-right-children="load('right')" :conf="rules.upload" ref="fileDiff"/>
+    <FileDiffv7 :lazy="true" :load-left-children="load('left')" :load-right-children="load('right')" :conf="rules.upload" :draw-base-mapping="false" ref="fileDiff"/>
       </el-col>
     </el-row>
 <!--    <el-row>
@@ -301,7 +301,7 @@ export default {
       client2:null,
       localClient:null,
       data:{
-        transportDialog:true,
+        transportDialog:false,
         type:true,
         registerRequest:{},
         server:{text:'',msg:[]},
@@ -342,7 +342,13 @@ export default {
       },
       rules:{
         upload:[
-            {base: 'D:/Test/base', relative: '', target: 'D:/Test/compared', mode: 'mapping'},
+            //{base: 'D:/Test/base', relative: '', target: 'D:/Test/compared', mode: 'mapping'},
+            //{base: 'D:/Test/compared', relative: '', mode: 'incrementUpdate',dispatch:Rule.DISPATCH_TARGET},
+            //{base:'D:/Test/base/a.zip/a/bb.zip',target: 'D:/Test/compared/a.zip/a/bb.zip',mode:'mapping'}
+           {base:'D:/Test/base', relative:'1.jpg', type:'match',target: 'D:/Test/compared/a.zip/a/bb.zip',mode:'mapping',zip:true,sub:true,testOnlyRelative:true},
+           {base:'D:/Test/compared/a.zip/a/bb.zip', mode:'cover',dispatch:Rule.DISPATCH_TARGET,through:true},
+
+            /*{base: 'D:/Test/base', relative: '', target: 'D:/Test/compared', mode: 'mapping'},
             {base: 'D:/Test/base', relative: 'a.txt', target: 'D:/Test/compared/d.txt', mode: 'mapping',pruning:true},
             {base: 'D:/Test/base/b', relative: 'a.bmp', target: 'D:/Test/compared/x.txt', mode: 'mapping'},
             //{base: 'D:/Test/compared/d.txt', relative: '', mode: 'incrementUpdate',dispatch:Rule.DISPATCH_TARGET},
@@ -369,7 +375,7 @@ export default {
             //{base: 'D:/Test/base/b/bb/x/g (1).bmp',  mode: 'increment'},
             {base: 'D:/Test/base/c', relative: '',target: 'D:/Test/compared/从', mode: 'mapping',pruning:true},
             {base: 'D:/Test/compared/从', relative: '', mode: 'cover',dispatch:Rule.DISPATCH_TARGET},
-            {base: 'D:/Test/compared/从', relative: '', mode: 'increment',dispatch:Rule.DISPATCH_TARGET},
+            {base: 'D:/Test/compared/从', relative: '', mode: 'increment',dispatch:Rule.DISPATCH_TARGET},*/
             //{base: 'D:/Test/base', relative: 'b.txt', target: 'D:/Test/compared/d.txt', mode: 'mapping'},
             //{base: 'D:/Test/compared', mode: 'increment'},
         ],
