@@ -25,4 +25,4 @@ function treeByPath(path,leafType){                                             
 }
 
 let {root,leaf,parent}=treeByPath('D:/A/B/C');
-console.log(123);
+console.log(321);
