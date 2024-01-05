@@ -378,8 +378,11 @@ export default {
       let main=data.rules.cur(this.main.side);
       let target=data.rules.cur(this.opposite.side);
       if(main){
-        if(main.config.mode==='except'||main.config.mode==='increment'){
+        if(main.config.mode==='except'){
           if(!target)return main.config.mode;
+        }
+        if(main.config.mode==='increment'){
+            return target?'normal':'increment';
         }
         if(main.config.mode==='mapping'&&(!this.drawBaseMapping)&&(main.config.base===this.main.basePath&&(!main.config.relative))){
           return 'normal';

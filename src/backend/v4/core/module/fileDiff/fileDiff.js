@@ -55,11 +55,16 @@ class Node{
 
     //. 合并节点
     merge(target,merges,targetKey,mergeKey){
-        if(merges.type===4){
+        let mergeRules=merges.rules.get(mergeKey,[]);
+        let mergeColorRules=mergeRules.filter(rb=>rb.config.mode!=='mapping');
+        if(mergeColorRules.length>0&&mergeColorRules[0].config.mode==='cover'){     //, 按覆盖规则的节点类型
+            this.type=merges.type;
+        }
+        /*if(merges.type===4){
             this.type=4;
         }else if(this.type!==4){
             this.type=Math.min(this.type,merges.type);
-        }
+        }*/
         //let hasNormal=this.rules.get(targetKey,[]).some(r=>r.config.mode==='normal');
         let list=this.rules
             .append(
