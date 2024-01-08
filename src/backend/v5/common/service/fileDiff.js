@@ -131,3 +131,16 @@ function treeByPath(path,leafType){                                             
     return {root,leaf,parent};
 }
 
+
+
+function tree(pb,rules=new RuleBundle(),processor,parentNode){
+    let children=processor.children(pb);
+    if(!children||children.length===0)return;
+    for(let base of children){
+        let baseNode=new Node().from(base);
+        let matchRules=rules.check(baseNode);
+        baseNode.relates=processor.buildRelate(matchRules,parentNode);
+        tree(base,rules,processor,baseNode);
+    }
+}
+

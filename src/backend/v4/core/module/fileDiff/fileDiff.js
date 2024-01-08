@@ -55,11 +55,14 @@ class Node{
 
     //. 合并节点
     merge(target,merges,targetKey,mergeKey){
-        let mergeRules=merges.rules.get(mergeKey,[]);
-        let mergeColorRules=mergeRules.filter(rb=>rb.config.mode!=='mapping');
-        if(mergeColorRules.length>0&&mergeColorRules[0].config.mode==='cover'){     //, 按覆盖规则的节点类型
-            this.type=merges.type;
-        }
+        //, ⭕cover规则时优先该节点类型
+        /*let mergeColorRules=merges.rules.get(mergeKey,[]).filter(rb=>rb.config.mode!=='mapping'||rb.config.mode!=='normal');
+        if(mergeColorRules.length>0&&mergeColorRules[0].config.mode==='cover'){
+            this.type=merges.key;
+        }*/
+        //, 🔴按照后合并节点优先（使用时先传输端文件树，后接收端文件树）
+        this.type=merges.type;
+        //, ⭕zip优先
         /*if(merges.type===4){
             this.type=4;
         }else if(this.type!==4){

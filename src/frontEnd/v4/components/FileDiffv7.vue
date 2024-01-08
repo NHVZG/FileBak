@@ -327,8 +327,8 @@ export default {
     initMidTree(){
       let basePath=this.opposite.basePath;
       let midTree=new Node('root','',1);
-      mergeTree(midTree,this.left.forest,'left','base');
-      mergeTree(midTree,this.right.forest,'right','base');
+      mergeTree(midTree,this.main.forest,this.main.side,'base');
+      mergeTree(midTree,this.opposite.forest,this.opposite.side,'base');
       let {match,nearest}=this.findNode(midTree,basePath||'/');
       if(match){
         this.mid.tree=match.children;
