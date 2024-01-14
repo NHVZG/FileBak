@@ -1,17 +1,27 @@
 class RuleBundle{
-    map={};                    //, {key:[NodeRulle]}
+    map={};                    //, {key:[NodeRule]}
     key='base';
 
-    constructor(key,ruleList) {
-        if(key&&ruleList) {
-            this.map[key] = ruleList;
-        }
+    constructor(ruleList,key=this.key) {
+        this.map[key] = ruleList.slice();
+        this.key=key;
     }
 
-    check(base,key){
-        let rules=this.get(key);
-        let matches=rules.filter(nr=>nr.rule.test(base));
-        return new RuleBundle(key,matches);
+    //. 匹配的规则集合
+    check(base,key=this.key){
+        let matches=
+             this.get(key,[])
+            .filter(nr=>nr.rule.test(base))
+            .map(nr=>nr.rule.copyAsMatch(base));
+        return new RuleBundle(matches,key);
+    }
+
+    //. 继承的规则集合
+    inherits(node,key=this.key){
+        let inherits=this.get(key,[])
+            .filter(nr=>nr.rule.inherit(node))
+            .map(nr=>nr.rule.copyAsInherit(node));
+        return new RuleBundle(inherits,key);
     }
 
     //. 获取分组
@@ -22,21 +32,36 @@ class RuleBundle{
         return defaults;
     }
 
-    put(key=this.key,values){
-        this.map[key]=values;
+    //. 添加
+    append(rules=new RuleBundle()){
+        for(let key of Object.keys(rules.map)){
+            let list=this.map[key];
+            if(!list){
+                this.map[key]=rules.map[key];
+            }else{
+                let map= new Map();
+                list.map(nr=>map.set(nr.rule,nr));
+                rules.map[key].map(nr=>{
+                    if(!map.get(nr.rule)){
+                        map.set(nr.rule,nr);
+                    }
+                });
+                let list=[];
+                this.map[key]=map.forEach(nr=>list.push(nr));
+            }
+        }
+        return this;
     }
 
-    //. 继承的规则
-    inherits(node,key){
-        let rules=this.get(key,[])
-      /*                      .filter(r=>{
-                                if(node.inZip&&(!r.config.through))return false;
-                                if(matchMode&&(matchMode!==r.config.dispatch))return false;
-                                let conf=this.config(r);
-                                return conf.penetrate||conf.inherit;  })
-                            .map(r=>r.instanceInherit(source));*/
-        return new RuleBundle(rules,key||this.mainKey)
+    //.排序
+    sorts(){
+        Object
+            .entries(this.map)
+            .map(entry=>{
+
+            });
     }
+
 
     //. 含有穿透规则，无视所有其他规则都被覆盖
     blackHole(){

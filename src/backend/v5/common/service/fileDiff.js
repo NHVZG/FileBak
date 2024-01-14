@@ -139,7 +139,12 @@ function tree(pb,rules=new RuleBundle(),processor,parentNode){
     for(let base of children){
         let baseNode=new Node().from(base);
         let matchRules=rules.check(baseNode);
-        baseNode.relates=processor.buildRelate(matchRules,parentNode);
+        let inheritRules=parentNode?parentNode.rules.inherits(baseNode):new RuleBundle();
+        baseNode.relates=processor.buildRelates(matchRules,inheritRules);
+        baseNode.rules=new RuleBundle()
+                                        .append(matchRules)
+                                        .append(inheritRules)
+                                        .sorts();
         tree(base,rules,processor,baseNode);
     }
 }
