@@ -64,5 +64,6 @@ class Rule {
 
 
 export {
-    Rule
+    Rule,
+    RULE_CONFIGS
 }
