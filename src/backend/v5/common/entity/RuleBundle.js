@@ -49,7 +49,8 @@ class RuleBundle{
                     }
                 });
                 let list=[];
-                this.map[key]=map.forEach(nr=>list.push(nr));
+                this.map[key]=list;
+                map.forEach(nr=>list.push(nr));
             }
         }
         return this;
@@ -73,6 +74,7 @@ class RuleBundle{
                     return a.idx-b.idx;
                 }).map(i=>i.nodeRule);
             });
+        return this;
     }
 
     //. 生效第一规则
