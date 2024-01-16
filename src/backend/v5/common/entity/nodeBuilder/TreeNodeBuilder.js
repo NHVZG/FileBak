@@ -12,12 +12,9 @@ class TreeNodeBuilder extends NodeBuilder{
 
 
     buildRelates(matchRules = new RuleBundle(), inheritRules = new RuleBundle()) {
-        /*let relates=super.buildRelates(matchRules,inheritRules);
-        for(let relate of relates){
-            buildPathNode(relate.path,relate.type,);
-        }*/
-
-
+        let matchRuleList=matchRules.get()||[];
+        let mappingNodeRule=matchRuleList.filter(nr=>nr.rule.config.base!==nr.rule.config.target);
+        mappingNodeRule
 
     }
 }
