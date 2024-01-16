@@ -40,7 +40,8 @@ function buildPathNode(filePath,leafType,tree){
         if(res.leaf.path===filePath){
             res.leaf.type=leafType;
             if(!(res.leaf.relates||[]).some(n=>n===res.leaf)){
-                res.leaf.relates=(res.leaf.relates||[]).push(res.leaf);
+                res.leaf.relates=res.leaf.relates||[];
+                res.leaf.relates.push(res.leaf);
             }
             return {root:tree,leaf:res.leaf,parent:res.parent};
         }
