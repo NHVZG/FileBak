@@ -14,7 +14,7 @@ class TreeNodeBuilder extends NodeBuilder{
     buildRelates(matchRules = new RuleBundle(), inheritRules = new RuleBundle()) {
         let matchRuleList=matchRules.get()||[];
         let mappingNodeRule=matchRuleList.filter(nr=>nr.rule.config.base!==nr.rule.config.target);
-        mappingNodeRule
+
 
     }
 }
