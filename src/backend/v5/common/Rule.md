@@ -40,3 +40,4 @@
 | TD（目标文件夹）       | TD        | SD       | TD（SZD）      |
 | TZ（目标zip）       | 1.TZ 2.SF | SD（TZD）  |  SZ（TZD SZD） |
 | E（空）            | SF        | SD       | SZ           |
+
