@@ -1,5 +1,10 @@
 import {Node} from "@/backend/v5/common/entity/Node";
 
+//. 文件名
+function baseName(filePath){
+    return filePath.substring(filePath.lastIndexOf('/')+1);
+}
+
 //. 格式化路径
 function formatPath(...filePaths){
     return filePaths.join('/').replaceAll(/\/+/gm, '/').replaceAll(/\/$/gm,'');
@@ -41,7 +46,7 @@ function buildPathNode(filePath,leafType,tree){
             res.leaf.type=leafType;
             if(!(res.leaf.relates||[]).some(n=>n===res.leaf)){
                 res.leaf.relates=res.leaf.relates||[];
-                res.leaf.relates.push(res.leaf);
+                //res.leaf.relates.push(res.leaf);
             }
             return {root:tree,leaf:res.leaf,parent:res.parent};
         }
@@ -55,7 +60,8 @@ function buildPathNode(filePath,leafType,tree){
     while((end=filePath.indexOf('/'))>0){
         let node=new Node(filePath.substring(start,end),filePath.substring(0,end),1);
         leaf=node;
-        leaf.relates=[leaf];
+        leaf.relates=[];
+        //leaf.relates=[leaf];
         if(!root)root=node;
         if(parent){
             parent.children.push(node);
@@ -71,6 +77,7 @@ function buildPathNode(filePath,leafType,tree){
 
 
 export {
+    baseName,
     formatPath,
     findPathNode,
     buildPathNode

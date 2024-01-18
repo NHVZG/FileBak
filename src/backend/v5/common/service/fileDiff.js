@@ -140,7 +140,7 @@ function tree(pb,rules=new RuleBundle(),processor,parentNode){
         let baseNode=new Node().from(base);
         let matchRules=rules.check(baseNode);
         let inheritRules=parentNode?parentNode.rules.inherits(baseNode):new RuleBundle();
-        baseNode.relates=processor.builder.buildRelates(matchRules,inheritRules);
+        baseNode.relates=processor.builder.buildRelates(baseNode,matchRules,inheritRules);
         baseNode.rules=new RuleBundle()
                                         .append(matchRules)
                                         .append(inheritRules)

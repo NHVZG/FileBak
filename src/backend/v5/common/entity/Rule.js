@@ -60,6 +60,14 @@ class Rule {
             Util.formatPath(this.target,node.path.replace(this.base,'')):
             this.target||node.path;
     }
+
+    buildTargetNode(node){
+        let targetPath=this.mapping(node);
+        if(!targetPath)return null;
+        return new Node()
+
+    }
+
 }
 
 
