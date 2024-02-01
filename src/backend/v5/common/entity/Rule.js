@@ -21,10 +21,11 @@ const MATCH_MODE = Object.freeze({
 class Rule {
     mode;                     //,规则类型
     base;                       //, 源基础路径
+    relative;                   //, 源相对路径
     type;                       //, 匹配方式
     testWholePath;       //, 整个路径作为匹配参数
     target;                    //, 映射目的路径（默认=base）
-    baseTarget;             //, target是否有基础路径，true则映射路径=target+文件相对路径，false则映射路径=targe
+    baseTarget;             //, target是否有基础路径，true则映射路径=target+文件相对路径，false则映射路径=target
     zip;                         //, 是否打包为zip
     recursionZip;           //, 遍历zip文件
 
