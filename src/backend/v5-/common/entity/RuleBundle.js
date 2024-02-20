@@ -1,21 +1,29 @@
 import {RULE_CONFIGS} from "@/backend/v5/common/entity/Rule";
 
-class RuleBundle {
+class RuleBundle{
     map={};                    //, {key:[NodeRule]}
     key='base';
 
+    constructor(ruleList=[],key=this.key) {
+        this.map[key] = ruleList.slice();
+        this.key=key;
+    }
+
     //. 匹配的规则集合
     check(base,key=this.key){
-        return this.get(key,[])
+        let matches=
+             this.get(key,[])
             .filter(nr=>nr.rule.test(base))
-            .map(nr=>nr)
+            .map(nr=>nr.rule.copyAsMatch(base));
+        return new RuleBundle(matches,key);
     }
 
     //. 继承的规则集合
-    inherits(baseNode,key=this.key){
-        return this.get(key,[])
-            .filter(nr=>nr.rule.inheritable(baseNode))
-            .map(nr=>nr);
+    inherits(node,key=this.key){
+        let inherits=this.get(key,[])
+            .filter(nr=>nr.rule.inherit(node))
+            .map(nr=>nr.rule.copyAsInherit(node));
+        return new RuleBundle(inherits,key);
     }
 
     //. 获取分组
@@ -73,6 +81,19 @@ class RuleBundle {
     cur(key){
         return this.get(key,[])[0];
     }
+
+
+    //. 含有穿透规则，无视所有其他规则都被覆盖
+    blackHole(key){
+        return this.get(key,[]).some(nr=>nr.rule.mode.penetrate);
+    }
+
+    //. 映射规则
+    mappings(key){
+        return this.get(key,[]).filter(r=>r.rule.target);
+    }
+
+
 }
 
 export {RuleBundle}

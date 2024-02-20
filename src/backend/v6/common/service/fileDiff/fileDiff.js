@@ -6,12 +6,12 @@ function trees(pb,rules=new RuleBundle(),processor,parentNode){
     if(!children||children.length===0)return;
     for(let base of children) {
         let baseNode = new Node().from(base);
-        let matchRules=rules.check(baseNode);
-        let inheritRules=parentNode?parentNode.rules.inherits(baseNode):new RuleBundle();
-        baseNode.relates=processor.buildRelates(baseNode,matchRules,inheritRules);
+        let matchRuleList=rules.check(baseNode);
+        let inheritRuleList=parentNode?parentNode.rules.inherits(baseNode):[];
+        baseNode.relates=processor.buildRelates(baseNode,matchRuleList,inheritRuleList);
         baseNode.rules=new RuleBundle()
-            .append(matchRules)
-            .append(inheritRules)
+            .append(matchRuleList)
+            .append(inheritRuleList)
             .sorts();
         trees(base,rules,processor,baseNode);
     }

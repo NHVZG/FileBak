@@ -1,5 +1,5 @@
 import {Node} from "@/backend/v5/common/entity/Node";
-import * as Util from "@/backend/v5/common/util/util";
+import * as Util from "@/backend/v5/common/util/Util";
 
 const RULE_CONFIGS = Object.freeze({
     except: new Symbol({inherit: true, penetrate: true, order: 1}),                      //例外 - 穿透 覆盖其他规则
@@ -16,6 +16,8 @@ const MATCH_MODE = Object.freeze({
     MATCH: new Symbol("match"),
 });
 
+
+//% 规则对象
 class Rule {
     mode;                     //,规则类型
     base;                       //, 源基础路径
@@ -44,7 +46,7 @@ class Rule {
     }
 
     //. 可否继承
-    inheritable(node=new Node()){
+    inherit(node=new Node()){
         if(node.inZip&&(!this.recursionZip)){
             return false;
         }
@@ -53,16 +55,24 @@ class Rule {
     }
 
     //. 映射地址
-    mapping(node=new Node()){
+    mapping(node){
         if(!this.test(node))return '';
         return this.baseTarget?
             Util.formatPath(this.target,node.path.replace(this.base,'')):
             this.target||node.path;
     }
+
+    buildTargetNode(node){
+        let targetPath=this.mapping(node);
+        if(!targetPath)return null;
+        return new Node()
+
+    }
+
 }
+
 
 export {
     Rule,
-    RULE_CONFIGS,
-    MATCH_MODE
+    RULE_CONFIGS
 }
