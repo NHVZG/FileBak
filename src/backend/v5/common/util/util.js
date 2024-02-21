@@ -11,8 +11,10 @@ function rootName(filePath){
 }
 
 //. 相对根目录的文件路径
-function relativePath(filePath){
-    return filePath.substring(filePath.indexOf('/')+1);
+function relativePath(filePath,root){
+    return root?
+        filePath.replace(`${formatPath(root)}/`,''):
+        filePath.substring(filePath.indexOf('/')+1);
 }
 
 
