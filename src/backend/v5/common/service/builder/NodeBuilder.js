@@ -21,29 +21,32 @@ class NodeBuilder{
 
     buildRelate(baseNode=new Node(),checkRuleList=[],inheritRuleList=[]){
         checkRuleList.map(r=>{
+            //, 目标树
             let targetPath=r.mapping(baseNode);
             let {relative,leaf,match,parent}=this.findNearestNode(targetPath);
             if(match){
                 if(r.mode===RULE_CONFIGS.remove){//, 隐藏目标节点
-
+                    leaf.display=false;
+                    leaf.seq=this.seq;
                 }
             }else{
-                this.appendNode(relative,leaf,r.zip);
+                leaf=this.appendNode(relative,leaf,r.zip,false);
             }
-
+            leaf.rules.append();
             if(targetPath!==baseNode.path){
 
             }
         });
     }
 
-    appendNode(path,leaf,zip=false){
+    appendNode(path,leaf,zip=false,origin=false){
         let root=rootName(path);
         if(root===path){
-            let child=new Node(formatPath(leaf.path,path),zip?FILE_TYPE.ZIP:FILE_TYPE.FILE,leaf.type===FILE_TYPE.ZIP||leaf.inZip);
+            let child=new Node(formatPath(leaf.path,path),zip?FILE_TYPE.ZIP:FILE_TYPE.FILE,leaf.type===FILE_TYPE.ZIP||leaf.inZip,origin,true,this.seq);
             leaf.children.push(child);
+            return child;
         }else{
-            let child=new Node(formatPath(leaf.path,root),FILE_TYPE.DIRECTORY,leaf.type===FILE_TYPE.ZIP||leaf.inZip);
+            let child=new Node(formatPath(leaf.path,root),FILE_TYPE.DIRECTORY,leaf.type===FILE_TYPE.ZIP||leaf.inZip,origin,true,this.seq);
             leaf.children.push(child);
             return this.appendNode(relativePath(leaf.path),child,zip);
         }
@@ -52,7 +55,20 @@ class NodeBuilder{
     findNearestNode(path='',parent=new Node()){
         parent=!parent?this.trees:parent;
         let rootDir=rootName(path);
-        let childNode=parent.children.find(n=>n.name===rootDir);
+        let childNode;
+
+        let idx=0;
+        for(let n of parent.children){
+            if(n.name===rootDir){               //, 查找到对应节点
+                childNode=n;
+                break;
+            }
+            if(!n.origin&&n.seq!==this.seq){                   //, 遍历过程发现非本此版本的顺便删除
+                parent.children.splice(idx,1);
+            }
+            idx++;
+        }
+
         if(childNode&&childNode.children&&childNode.children.length>0){
             return this.findNearestNode(relativePath(path),childNode);
         }else{
