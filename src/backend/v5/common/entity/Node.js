@@ -8,7 +8,8 @@ class Node{
     children=[];                  //, 子节点
 
     relates=[];                     //, 关联节点
-    origin;                           //,是否源节点
+    origin;                           //,是否源节点（用于区分映射后添加的节点）
+    display=true;                //, 是否显示（origin=true用于标识时是否显示）
 
     constructor(path,type,inZip) {
         this.name=baseName(path);

@@ -1,14 +1,17 @@
 import {Node} from "@/backend/v5/common/entity/Node";
 import {relativePath, rootName,formatPath} from "@/backend/v5/common/util/util";
 import {FILE_TYPE} from "@/backend/v5/common/constant/Constant";
+import {RULE_CONFIGS} from "@/backend/v5/common/entity/Rule";
 
 class NodeBuilder{
     /**
      * , 1. trees按照原目标树为基底 源树映射节点直接在目标树上 添加，删除（标记）
      * , 2. trees可能多次修改，需要记录版本号seq
+     * , 3. 遍历节点时判断残留非本次版本的删除（不一定删除干净，仅仅减少无效节点）
+     * , 4. 树遍历时需要判断标记
      */
     trees=new Node();
-    seq=new Date().getTime();
+    seq;
 
     constructor(trees=new Node(),seq=new Date().getTime()) {
         this.trees=trees;
@@ -20,7 +23,11 @@ class NodeBuilder{
         checkRuleList.map(r=>{
             let targetPath=r.mapping(baseNode);
             let {relative,leaf,match,parent}=this.findNearestNode(targetPath);
-            if(!match){
+            if(match){
+                if(r.mode===RULE_CONFIGS.remove){//, 隐藏目标节点
+
+                }
+            }else{
                 this.appendNode(relative,leaf,r.zip);
             }
 
