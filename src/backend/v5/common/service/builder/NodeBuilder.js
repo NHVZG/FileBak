@@ -32,10 +32,11 @@ class NodeBuilder{
             }else{
                 leaf=this.appendNode(relative,leaf,r.zip,false);
             }
-            leaf.rules.append();
-            if(targetPath!==baseNode.path){
+            
 
-            }
+            leaf.rules.append();
+            leaf.relates
+
         });
     }
 
@@ -58,15 +59,16 @@ class NodeBuilder{
         let childNode;
 
         let idx=0;
-        for(let n of parent.children){
+        for(let n of parent.children.slice()){
             if(n.name===rootDir){               //, 查找到对应节点
                 childNode=n;
                 break;
             }
             if(!n.origin&&n.seq!==this.seq){                   //, 遍历过程发现非本此版本的顺便删除
                 parent.children.splice(idx,1);
+            }else {
+                idx++;
             }
-            idx++;
         }
 
         if(childNode&&childNode.children&&childNode.children.length>0){
