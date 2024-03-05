@@ -2,6 +2,7 @@ import {Node} from "@/backend/v5/common/entity/Node";
 import {relativePath, rootName,formatPath} from "@/backend/v5/common/util/util";
 import {FILE_TYPE} from "@/backend/v5/common/constant/Constant";
 import {RULE_CONFIGS} from "@/backend/v5/common/entity/Rule";
+import {RuleBundleItem} from "@/backend/v5/common/entity/RuleBundleItem";
 
 class NodeBuilder{
     /**
@@ -9,6 +10,7 @@ class NodeBuilder{
      * , 2. trees可能多次修改，需要记录版本号seq
      * , 3. 遍历节点时判断残留非本次版本的删除（不一定删除干净，仅仅减少无效节点）
      * , 4. 树遍历时需要判断标记
+     * , 5. 规则仅仅作用于原节点，不作用于上一个规则新增的节点
      */
     trees=new Node();
     seq;
@@ -25,19 +27,29 @@ class NodeBuilder{
             let targetPath=r.mapping(baseNode);
             let {relative,leaf,match,parent}=this.findNearestNode(targetPath);
             if(match){
+                leaf.seq=this.seq;
                 if(r.mode===RULE_CONFIGS.remove){//, 隐藏目标节点
                     leaf.display=false;
-                    leaf.seq=this.seq;
                 }
             }else{
                 leaf=this.appendNode(relative,leaf,r.zip,false);
             }
-            
-
-            leaf.rules.append();
-            leaf.relates
-
+            let rbi=new RuleBundleItem();
+            rbi.source=baseNode;
+            rbi.generation=0;
+            rbi.target=leaf;
+            rbi.match=leaf;
+            rbi.rule=r;
+            leaf.rules.append(rbi);
+            //, 源树
+            if(!baseNode.relates.includes(leaf)){
+                baseNode.relates.push(leaf);
+            }
+            baseNode.rules.append(rbi);
         });
+
+
+
     }
 
     appendNode(path,leaf,zip=false,origin=false){

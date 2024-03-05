@@ -6,7 +6,7 @@ class RuleBundleItem{
     merge;                  //, 合并前节点 - 保留
 
     rule;                                                                              //, 规则配置
-    ignore;                                                                         //, 是否忽略
+    ignore;                                                                         //, 是否忽略 - 保留
     generation=0;                                                              //, 继承代数
 
 

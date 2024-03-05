@@ -1,0 +1,5 @@
+class RuleBundleItem {
+
+}
+
+export {RuleBundleItem}
