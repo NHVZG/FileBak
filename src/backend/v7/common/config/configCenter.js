@@ -15,6 +15,12 @@ const RULE_CONFIG = Object.freeze({
     cover: Symbol({inherit: true, penetrate: false, order: 13}),                     //覆盖 - 完全与源文件路径一致，删除不在受控内的文件
 });
 
+const MATCH_MODE = Object.freeze({
+    REGEX: Symbol("regex"),
+    MATCH: Symbol("match"),
+});
+
+
 const DISPATCH_CONFIG={
     [RULE_CONFIG.except]:ExceptProcessor,
     [RULE_CONFIG.remove]:RemoveProcessor,
@@ -27,5 +33,6 @@ const DISPATCH_CONFIG={
 
 export {
     RULE_CONFIG,
+    MATCH_MODE,
     DISPATCH_CONFIG,
 }
