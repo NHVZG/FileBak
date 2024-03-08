@@ -6,14 +6,29 @@ import {FILE_TYPE} from "@/backend/v5/common/constant/Constant";
 import {RuleBundleItem} from "@/backend/v7/common/entity/RuleBundleItem";
 import {ACTION} from "@/backend/v7/common/service/fileDiff/rule/processor/BaseProcessor";
 
+/**
+ %  baseTree:              主树
+ `            |     规则(increment,cover,update,incrementUpdate)
+ `           v
+ %  mergeTree:         合并结果树
+ `         ^
+ `         |    规则(remove)
+ %  targetTree:         目标树
+
+ %  tree: 合并结果树/合并前目标树 根据Node.seq(版本) Node.origin(是否源节点)过滤显示
+ %  seq: 当前版本
+ %  key: 规则分组 主树遍历规则时用base, 目标树遍历规则时用target
+ */
 class RuleDispatcher{
 
     tree;
     seq;
+    key;
 
-    constructor(tree=new Node(),seq=new Date().getTime()) {
+    constructor(tree=new Node(),key,seq=new Date().getTime()) {
         this.tree=tree;
         this.seq=seq;
+        this.key=key;
     }
 
 
@@ -42,12 +57,9 @@ class RuleDispatcher{
 
         if(buildRes.action===ACTION.ADD){
             //, 父节点可视再新增节点
-            if(parent.display){
+            if(match){
 
             }
-
-
-
             this.appendNode(relative,buildRes.node,rule.zip,inherit);
         }else if(buildRes.action===ACTION.REMOVE){
             if(match){
@@ -58,6 +70,33 @@ class RuleDispatcher{
         }
 
     }
+
+
+    //. 设置父节点版本 用于新增子节点的版本和父节点不同时
+    setParentVersion(node=new Node(),rbi=new RuleBundleItem()){
+        let {parent}=node;
+        if(!parent)return;
+
+
+
+        if(parent.seq!==this.seq){
+            if(parent.origin){//,源节点
+
+            }
+
+
+            let rbi=node.parent.rb.cur(this.key);
+
+
+            node.parent.rb.clear();
+            node.parent.rb.append(rbi,this.key);
+        }else{
+
+        }
+
+
+    }
+
 
 
     /**

@@ -10,6 +10,15 @@ class RuleBundle {
         }
         list.push(rbi);
     }
+
+    clear(){
+        this.map={};
+    }
+
+    cur(key=this.key){
+
+    }
+
 }
 
 export {RuleBundle}
