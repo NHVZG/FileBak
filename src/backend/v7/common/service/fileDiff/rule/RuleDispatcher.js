@@ -5,6 +5,8 @@ import {formatPath} from "@/backend/v5/common/util/util";
 import {FILE_TYPE} from "@/backend/v5/common/constant/Constant";
 import {RuleBundleItem} from "@/backend/v7/common/entity/RuleBundleItem";
 import {ACTION} from "@/backend/v7/common/service/fileDiff/rule/processor/BaseProcessor";
+import {ITERATE_MODE, TreeIterator} from "@/backend/v7/common/service/tree/iterator/TreeIterator";
+import {FileDiffIterateProcessor} from "@/backend/v7/common/service/tree/iterator/processor/FileDiffIterateProcessor";
 
 /**
  %  baseTree:              主树
@@ -18,17 +20,24 @@ import {ACTION} from "@/backend/v7/common/service/fileDiff/rule/processor/BasePr
  %  tree: 合并结果树/合并前目标树 根据Node.seq(版本) Node.origin(是否源节点)过滤显示
  %  seq: 当前版本
  %  key: 规则分组 主树遍历规则时用base, 目标树遍历规则时用target
+ % iteratorProcessor： 遍历节点处理器
+ % searchIterator:         查询迭代器
+ % addIterator:             添加节点迭代器
  */
 class RuleDispatcher{
 
     tree;
     seq;
     key;
+    iteratorProcessor;
+    treeIterator=new TreeIterator();
 
     constructor(tree=new Node(),key,seq=new Date().getTime()) {
         this.tree=tree;
         this.seq=seq;
         this.key=key;
+        this.iteratorProcessor=new FileDiffIterateProcessor(this.seq);
+        this.treeIterator=new TreeIterator(this.tree,this.iteratorProcessor);
     }
 
 
@@ -44,23 +53,28 @@ class RuleDispatcher{
 
     //.处理规则
     execute(baseNode=new Node(),rule=new RuleBundleItem(),inherit=false){
-        let processor=new DISPATCH_CONFIG[rule.config]();
+        let ruleProcessor=new DISPATCH_CONFIG[rule.config]();
         //, 规则处理器
-        let rbi=processor.process(baseNode,rule,inherit);
+        let rbi=ruleProcessor.process(baseNode,rule,inherit);
         //, 映射路径查找trees
-        let {relative,leaf,match,parent}=this.findNearestNode(rbi.rule.mapping(baseNode));
+        let {relative,leaf,match,parent}=this.treeIterator.execute(ITERATE_MODE.SEARCH,rbi.rule.mapping(baseNode));
         //, 构建映射目标节点
-        let buildRes=processor.buildTarget(baseNode,rbi,false,leaf);
+        let buildRes=ruleProcessor.buildTarget(baseNode,rbi,false,leaf);
 
 
+        switch (buildRes.action) {
+            case ACTION.ADD:            return this.onAddNode(relative,leaf);
+            case ACTION.REMOVE:     return this.onRemoveNode(findResult);
+        }
 
 
         if(buildRes.action===ACTION.ADD){
             //, 父节点可视再新增节点
-            if(match){
-
+            if(!match){
+                this.treeIterator.execute(ITERATE_MODE.ADD,relative);
+                //this.treeIterator.execute(relative,buildRes.node,rule.zip,inherit);
             }
-            this.appendNode(relative,buildRes.node,rule.zip,inherit);
+
         }else if(buildRes.action===ACTION.REMOVE){
             if(match){
                 if(){
@@ -70,6 +84,19 @@ class RuleDispatcher{
         }
 
     }
+
+
+
+
+    onAddNode(relative){
+        this.treeIterator.execute(ITERATE_MODE.ADD,relative);
+    }
+
+    onRemoveNode(){
+        this.treeIterator.execute(ITERATE_MODE.SEARCH,)
+    }
+
+
 
 
     //. 设置父节点版本 用于新增子节点的版本和父节点不同时
