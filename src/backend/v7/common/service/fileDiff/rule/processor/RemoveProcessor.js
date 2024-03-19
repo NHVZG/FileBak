@@ -8,7 +8,7 @@ import {RuleBundleItem} from "@/backend/v7/common/entity/RuleBundleItem";
 //% 删除规则
 class RemoveProcessor extends BaseProcessor{
 
-    process(baseNode = new Node(), rule = new Rule()) {
+    process(baseNode = new Node(), rule = new Rule(),inherit=false) {
         let rbi=new RuleBundleItem(rule,baseNode);
         baseNode.rb.append(rbi);
         return rbi;

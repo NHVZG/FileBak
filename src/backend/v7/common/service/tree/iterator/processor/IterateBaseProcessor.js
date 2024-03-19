@@ -18,8 +18,9 @@ class IterateBaseProcessor{
      * 指定索引路径时匹配到指定路径
      * @param node          节点
      * @param parent        父节点
+     * @param arg              附加参数
      */
-    onMatch(node=new Node(),parent=new Node()){
+    onMatch(node=new Node(),parent=new Node(),arg){
 
     }
 
@@ -40,8 +41,24 @@ class IterateBaseProcessor{
      * @param name
      * @param relativePath
      */
-    buildNode(parent=new Node(),name,relativePath){
+    onAdd(parent=new Node(),name,relativePath){
 
+    }
+
+    /**
+     * 设置节点版本
+     */
+    updateSeq(node=new Node()) {
+        if (!node.parent) return;
+        if (node.parent.seq !== node.seq) {//, 父节点版本跟当前不一，则清空规则，源节点则删除版本
+            node.parent.rb.clear();
+            if (node.parent.origin) {
+                delete node.parent.seq;
+            } else {
+                node.parent.seq = node.seq;
+            }
+        }
+        this.updateSeq(node.parent);
     }
 
 }

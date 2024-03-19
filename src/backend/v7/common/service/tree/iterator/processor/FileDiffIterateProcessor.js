@@ -1,7 +1,10 @@
 import {Node} from "@/backend/v7/common/entity/Node";
 import {IterateBaseProcessor} from "@/backend/v7/common/service/tree/iterator/processor/IterateBaseProcessor";
+import {formatPath, rootName} from "@/backend/v7/common/util/util";
+import {FILE_TYPE} from "@/backend/v7/common/config/Constant";
 
-//% 遍历节点处理器
+
+//% FileDiff遍历节点处理器【查询+新增节点】
 class FileDiffIterateProcessor extends IterateBaseProcessor{
 
     parentNode=new Node();
@@ -42,25 +45,20 @@ class FileDiffIterateProcessor extends IterateBaseProcessor{
     onMatch(node = new Node(), parent = new Node()) {
         return {
             leaf:node,
+            idx:this.idx,
             match:true,
             parent
         }
     }
 
     //.构建节点
-    buildNode(parent = new Node(), name, relativePath) {
-
-    }
-
-    //.设置节点版本
-    updateSeq(node=new Node()){
-        if(node.parent&&(!node.parent.origin)){
-            if(node.parent.seq!==node.seq){     //, 父节点版本跟当前不一，则清空规则
-                node.parent.rb.clear();
-            }
-            node.parent.seq=node.seq;
-            this.updateSeq(node.parent);
-        }
+    onAdd(parent = new Node(), name, relativePath,{fileType,origin,seq}) {
+        let rootDir=rootName(relativePath);
+        return new Node(
+            formatPath(parent.path,rootDir),
+            fileType,
+            parent.inZip||parent.type===FILE_TYPE.ZIP,
+            origin,seq);
     }
 
 }

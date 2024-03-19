@@ -40,7 +40,7 @@ class BaseProcessor {
 }
 
 const ACTION=Object.freeze({
-   NOTHING:0,
+   UPDATE:0,
    ADD:1,
    REMOVE:2
 });
